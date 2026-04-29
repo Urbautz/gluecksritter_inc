@@ -25,21 +25,44 @@ More classes can be added as expansions.
 
 ## Stats
 
-### Core Stats (D&D-style, 3–18 scale)
+### Core Stats (1–10 scale)
 
-| Stat | Affects |
+Each stat is a **dice pool** — the number equals how many D10s are rolled for checks using that stat. A stat of 1 is barely functional; 10 is world-class.
+
+| Stat | Dice pool used for |
 |---|---|
-| STR | Melee damage, carrying capacity |
-| DEX | Initiative, ranged accuracy, dodge, trap-disarm |
-| CON | Max HP, injury recovery speed |
-| SMA | Smarts, Spell power, dungeon-reading (avoids traps) |
-| CHA | Negotiation, party cohesion |
+| STR | Melee attacks, forcing doors, carrying capacity |
+| DEX | Ranged attacks, initiative, dodge, trap-disarm, retreat |
+| CON | Injury resistance, recovery speed; sets Max HP |
+| SMA | Spell power, trap-detection, dungeon-reading, resist fear |
+| CHA | Negotiation (lower retainer cost), party cohesion, morale recovery |
+
+Stats start at 1–4 for Level 1 heroes and cap at 10. Each level-up grants 2 stat points to allocate freely.
+
+**Equipment, skills, and morale state add or remove dice** from the pool before a roll — they never change the stat value itself.
+
+### Dice Pool Resolution
+
+All checks roll a pool of D10s:
+
+| Face | Meaning |
+|---|---|
+| 7, 8, 9 | Hit (success) |
+| 1, 2 | Failure (glitch) |
+| 0 | Critical indicator |
+| 3–6 | Neutral |
+
+**Net = hits − failures.**  
+**Critical success** = count(0s) > count(failures 1+2).  
+**Critical failure** = count(0s) > count(hits 7+8+9).  
+Both can trigger on the same roll if 0s dominate everything. A critical flag amplifies the outcome — the game decides what that means per context (bonus damage, spectacular trap, etc.).
+
 
 ### Derived Stats
 
-- **Max HP** = CON modifier × level + class base
-- **Initiative** = DEX modifier
-- **Carry weight** = STR × 10 lbs
+- **Max HP** = CON × 3 + class base (scales with level via stat points)
+- **Initiative** = DEX pool roll at start of combat (net determines turn order)
+- **Carry capacity** = STR × 5 kg
 
 ### Morale (0–100)
 
@@ -47,9 +70,9 @@ Separate from combat stats. Represents willingness to work.
 
 | Range | State | Effect |
 |---|---|---|
-| 81–100 | Motivated | +10% combat rolls, +10% XP gain |
+| 81–100 | Motivated | +1 die to all combat pools, +10% XP gain |
 | 51–80 | Content | No modifier |
-| 26–50 | Disgruntled | doubled critical failure risk |
+| 26–50 | Disgruntled | −1 die to all pools; 1s and 2s both count as failures (glitches doubled) |
 | 11–25 | Bitter | May quit mid-dungeon, demands raise |
 | 0–10 | Breaking | Will quit or betray party |
 

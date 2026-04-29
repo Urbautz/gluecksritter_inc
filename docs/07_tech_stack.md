@@ -24,10 +24,11 @@
 ```
 src/
   core/
+    dice.ts          — D10 pool roller, RollResult type, seeded PRNG wrapper
     hero.ts          — Hero class, stat calculations, leveling
     dungeon.ts       — Dungeon data model (tiles, rooms, entities)
     generator.ts     — Procedural dungeon generation
-    combat.ts        — Automated combat resolution
+    combat.ts        — Automated combat resolution (pool vs pool)
     economy.ts       — Gold, payroll, contracts, loot sales
     time.ts          — Game clock, day advancement
     events.ts        — Random narrative events
@@ -38,7 +39,6 @@ src/
     tavernBoard.ts   — Tavern board DOM logic
     inventory.ts     — Drag-and-drop equipment UI
     ledger.ts        — Finance screen
-    editor.ts        — Dungeon creator / editor
   data/
     classes.ts       — Class definitions, ability trees
     enemies.ts       — Enemy templates and loot tables
@@ -98,11 +98,38 @@ The dungeon map is rendered on a `<canvas>` element:
 
 The rest of the UI (roster, boards, inventory, ledger) is standard HTML/CSS — no canvas needed there.
 
+## Dice Pool System
+
+All checks use a **D10 pool** resolved by `src/core/dice.ts`:
+
+```
+rollPool(poolSize: number, rng): RollResult
+```
+
+```ts
+type RollResult = {
+  dice: number[];        // raw face values (0–9)
+  hits: number;          // count of 7/8/9
+  failures: number;      // count of 1/2
+  net: number;           // hits - failures
+  nines: number;         // count of 9s
+  ones: number;          // count of 1s
+  zeros: number;          // count of 0s
+  isCritSuccess: boolean; // zeros > failures
+  isCritFailure: boolean; // zeros > hits
+}
+```
+
+Pool size for a check = hero stat + equipment dice bonus ± morale modifier.  
+Difficulty is expressed as a **target net** (e.g. a Tier 2 trap requires net ≥ 2 on DEX to disarm cleanly).
+
 ## Random Number Generation
 
 All dice rolls use a seeded PRNG (xoshiro128**) so that:
 - A run can be replayed deterministically from its seed (for debugging)
 - Seeds can optionally be displayed to the player (fun/fairness transparency)
+
+The PRNG instance is passed explicitly into every `rollPool` call — no global state.
 
 ## Development Milestones
 

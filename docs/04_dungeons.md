@@ -17,13 +17,13 @@ Maps are composed of square tiles on a grid. Each tile has a **type**:
 | Floor | Passable, no effect |
 | Wall | Impassable |
 | Door | Passable after check (lockpick / force / key) |
-| Trap | Hidden until spotted (DEX/INT check) |
+| Trap | Hidden until spotted (DEX/SMA pool check) |
 | Treasure | Contains loot, may be guarded |
 | Enemy Spawn | Contains an encounter |
 | Boss Room | Contains the dungeon boss |
 | Entry / Exit | Party start and escape points |
 | Hazard | Environmental danger (pit, acid pool, collapsing ceiling) |
-| Secret | Hidden passage, revealed by high WIS/INT |
+| Secret | Hidden passage, revealed by high SMA |
 
 ### Rooms
 
@@ -75,29 +75,53 @@ Theme affects tile art, enemy types, trap types, and loot tables:
 
 ### Enemy Stats
 
-Enemies have simplified stats: HP, Attack, Defense, Initiative, Special Abilities.
+Enemies have simplified stats mirroring hero stats: HP, STR, DEX, SMA, Initiative pool, Special Abilities.
 
-Enemy difficulty is rated **CR (Challenge Rating)** 1–10, matching dungeon tier expectations.
+Enemy difficulty is rated **CR (Challenge Rating)** 1–10. CR maps directly to approximate pool sizes:
+- CR 1–2: pools of 2–3 dice (fodder)
+- CR 3–5: pools of 4–6 dice (standard threat)
+- CR 6–8: pools of 7–9 dice (dangerous)
+- CR 9–10: pools of 10+ dice (boss-tier)
 
 ### Combat Resolution
 
-Combat is **automated and dice-based** (visible to the player as animated events on the map):
+Combat is **automated and dice-pool-based** (visible to the player as animated events on the map).
 
-1. Initiative order determined (DEX modifier + d6 roll)
-2. Each combatant attacks in order:
-   - Roll d20 + relevant modifier vs. target's Defense
-   - On hit: roll damage die + modifier
-3. Special abilities trigger on specific conditions (flanking, low HP, etc.)
-4. Round continues until one side flees or is eliminated
-5. Heroes with low morale or HP may attempt to flee instead of fighting
+#### Initiative
+Each combatant rolls their **DEX pool** at the start of combat. Net result determines turn order (highest net goes first; ties broken by raw DEX value).
 
-The player sees this play out on the dungeon map in real-time (or accelerated). They cannot intervene except to **sound the retreat** — which triggers all living heroes to attempt to exit, possibly fighting their way out.
+#### Attack
+Attacker rolls their relevant pool (**STR** for melee, **DEX** for ranged, **SMA** for spells).  
+Defender rolls their **DEX pool** (dodge/parry).  
+Outcome is determined by comparing nets:
+
+| Attacker net vs Defender net | Result |
+|---|---|
+| Attacker net > Defender net | Hit — damage = attacker net |
+| Equal | Glancing blow — 1 damage |
+| Defender net > Attacker net | Miss |
+
+**Critical hit** (attacker rolls crit): damage multiplied by (1 + crit magnitude). A 30% magnitude crit on a net-3 hit deals ~4 damage instead of 3.
+
+#### Damage & HP
+Damage dealt reduces HP directly. No separate armor roll — equipment grants **bonus dice to the DEX defend pool** (heavier armor = more dice, but also reduces DEX pool for initiative and movement checks).
+
+#### Special Abilities
+Trigger on specific conditions: flanking (+1 die to attacker), low HP (below 30% triggers fear SMA check), enemy type bonuses (Undead ignore fear, Constructs immune to poison).
+
+#### Round Flow
+1. Roll initiative pools → sort turn order
+2. Each combatant takes their turn in order (attack or special ability)
+3. Heroes with Morale ≤ 25 must pass a **SMA pool check (net ≥ 1)** each round or attempt to flee
+4. Round repeats until one side is eliminated or flees
+
+The player watches this on the dungeon map. They cannot intervene except to **sound the retreat**.
 
 ### Retreat
 
 When the player orders a retreat:
 - Heroes move toward Exit, fighting only if cornered
-- Each hero rolls a DEX check to disengage from current combat
+- Each hero rolls a **DEX pool check (net ≥ 1)** to disengage from current combat; failure means one more attack is taken before they break free
 - Loot carried at retreat time is kept; loot not yet picked up is lost
 
 ## Loot
@@ -137,7 +161,7 @@ The dungeon run outcome is heavily influenced by party composition:
 
 - A Rogue in the party disarms traps before they trigger
 - A Cleric heals between rooms (reduces injury risk)
-- A Mage can open locked doors magically (skipping DEX checks)
+- A Mage can open locked doors magically (skipping DEX pool checks, uses SMA pool instead with a bonus die)
 - A Bard keeps morale up, reducing flee-chance
 - A Ranger spots ambushes before the party walks in
 
