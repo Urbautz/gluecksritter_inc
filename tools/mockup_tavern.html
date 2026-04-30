@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glücksritter Inc — Tavern Board</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #1d2820;
+      --bg-light:  #243028;
+      --chalk:     #ddd8c8;
+      --chalk-hi:  #f0ece0;
+      --dim:       #7a7260;
+      --gold:      #c8a840;
+      --gold-dark: #7a6420;
+      --red:       #a04040;
+      --green:     #5a9060;
+      --card-bg:   #f4ead8;
+      --card-ink:  #2c2010;
+      --card-dim:  #7a6840;
+      --font:      'Caveat', 'Comic Sans MS', cursive;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--chalk);
+      min-height: 100vh;
+      font-size: 18px;
+      /* subtle chalkboard texture via layered radial gradients */
+      background-image:
+        radial-gradient(ellipse 80% 60% at 15% 20%, rgba(255,255,255,0.012) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 85% 80%, rgba(255,255,255,0.008) 0%, transparent 60%);
+    }
+
+    /* ── TOP BAR ───────────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 28px;
+      border-bottom: 1px solid rgba(200,190,160,0.18);
+      background: rgba(24,34,26,0.96);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      backdrop-filter: blur(6px);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab {
+      font-family: var(--font);
+      font-size: 19px;
+      padding: 6px 18px;
+      background: none;
+      border: none;
+      color: var(--dim);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s;
+      letter-spacing: 0.3px;
+    }
+    .tab:hover { color: var(--chalk); }
+    .tab.active {
+      color: var(--chalk-hi);
+      font-weight: 700;
+    }
+    /* chalk underline — slightly uneven via two shadows */
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 12px; right: 12px;
+      height: 2px;
+      background: var(--chalk-hi);
+      border-radius: 2px;
+      box-shadow: 0 1px 0 rgba(240,236,224,0.3), 2px 2px 0 rgba(240,236,224,0.1);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .gold-display {
+      font-size: 21px;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.5px;
+    }
+    .gold-display .label {
+      font-size: 14px;
+      color: var(--gold-dark);
+      font-weight: 400;
+      margin-right: 4px;
+    }
+
+    .next-day-btn {
+      font-family: var(--font);
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(90,60,14,0.5);
+      border: 2px solid var(--gold);
+      border-radius: 3px;
+      padding: 7px 22px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
+      /* torn-parchment feel: irregular outer border */
+      clip-path: polygon(0% 0%, 98% 2%, 100% 100%, 2% 98%);
+    }
+    .next-day-btn:hover { background: rgba(120,88,20,0.6); }
+
+    /* ── MAIN CONTENT ──────────────────────────────────────── */
+    .main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 32px 60px;
+    }
+
+    .screen-header { margin-bottom: 8px; }
+    .screen-title {
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--chalk-hi);
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+    .screen-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 6px 0 28px;
+      font-size: 17px;
+      color: var(--dim);
+    }
+    .screen-meta .sep { opacity: 0.4; }
+
+    /* ── HERO GRID ─────────────────────────────────────────── */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 32px 28px;
+      align-items: start;
+    }
+
+    /* wrapper needed so tutorial annotation can escape card overflow */
+    .card-wrap {
+      position: relative;
+    }
+
+    .hero-card {
+      background: var(--card-bg);
+      color: var(--card-ink);
+      border-radius: 2px;
+      padding: 20px 16px 14px;
+      position: relative;
+      transform: rotate(var(--tilt, 0deg));
+      box-shadow:
+        3px 5px 14px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(0,0,0,0.15);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: default;
+    }
+    .hero-card:hover {
+      transform: rotate(0deg) translateY(-4px);
+      box-shadow: 4px 10px 22px rgba(0,0,0,0.65), 0 0 0 1px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    /* thumbtack pin */
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 35%, #aaa 0%, #555 60%, #333 100%);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+      z-index: 1;
+    }
+
+    /* hired state */
+    .hero-card.hired {
+      opacity: 0.5;
+      filter: grayscale(0.4);
+      pointer-events: none;
+    }
+    .hero-card.hired::after {
+      content: 'Hired';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--green);
+      background: rgba(244,234,216,0.5);
+      border-radius: 2px;
+      transform: rotate(-8deg);
+      letter-spacing: 2px;
+    }
+
+    .hero-portrait {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--portrait-bg, #8a6a4a);
+      border: 2px solid rgba(0,0,0,0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.88);
+      margin: 0 auto 12px;
+      flex-shrink: 0;
+    }
+
+    .hero-name {
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      color: #1a1005;
+      line-height: 1.15;
+    }
+    .hero-class-row {
+      text-align: center;
+      font-size: 15px;
+      color: var(--card-dim);
+      margin-bottom: 10px;
+    }
+    .class-badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 2px;
+      font-size: 14px;
+      background: rgba(0,0,0,0.06);
+    }
+
+    .hero-wage {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      margin-bottom: 12px;
+    }
+    .hero-wage .per { font-size: 13px; font-weight: 400; color: var(--card-dim); }
+
+    .traits {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+      min-height: 30px;
+      margin-bottom: 14px;
+    }
+    .trait {
+      font-size: 13px;
+      padding: 2px 9px;
+      border-radius: 2px;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.07);
+      color: #3a2810;
+    }
+    .trait.unknown {
+      color: var(--card-dim);
+      font-style: italic;
+      background: rgba(0,0,0,0.04);
+      border-style: dashed;
+    }
+    .trait.revealed {
+      border-color: var(--green);
+      color: #2a4a20;
+      background: rgba(90,144,96,0.12);
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      margin: 0 0 12px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 7px;
+    }
+    .btn {
+      font-family: var(--font);
+      font-size: 16px;
+      border-radius: 2px;
+      cursor: pointer;
+      padding: 6px 10px;
+      transition: background 0.15s, color 0.15s;
+      border: 1px solid;
+    }
+    .btn-interview {
+      flex: 1;
+      background: transparent;
+      border-color: rgba(0,0,0,0.2);
+      color: var(--card-dim);
+    }
+    .btn-interview:hover { background: rgba(0,0,0,0.07); }
+    .btn-interview:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .btn-hire {
+      flex: 2;
+      background: #4a2e08;
+      border-color: #4a2e08;
+      color: #f4d870;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .btn-hire:hover { background: #6a4210; border-color: #6a4210; }
+
+    /* ── TUTORIAL ANNOTATION ───────────────────────────────── */
+    .tutorial-wrap {
+      position: absolute;
+      inset: -14px;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* chalk-feel dashed outline via SVG rect in background */
+    .chalk-outline {
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      border: 2px dashed rgba(220,210,180,0.7);
+      box-shadow:
+        0 0 0 4px rgba(220,210,180,0.08),
+        0 0 12px rgba(220,210,180,0.12);
+      animation: chalk-pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes chalk-pulse {
+      0%, 100% { opacity: 0.8; }
+      50%       { opacity: 0.4; }
+    }
+
+    .tutorial-note {
+      position: absolute;
+      top: -8px;
+      left: calc(100% + 18px);
+      width: 190px;
+      background: #f4ead8;
+      color: #2c2010;
+      padding: 10px 13px 8px;
+      border-radius: 2px;
+      box-shadow: 2px 3px 10px rgba(0,0,0,0.45);
+      transform: rotate(1.5deg);
+      font-size: 17px;
+      line-height: 1.35;
+      pointer-events: all;
+    }
+    /* chalk arrow from note to card */
+    .tutorial-note::before {
+      content: '←';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-right: 2px;
+      font-size: 26px;
+      color: var(--chalk);
+      opacity: 0.7;
+    }
+    .note-pin {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 35%, #bbb 0%, #666 70%);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .note-text { display: block; }
+    .note-dismiss {
+      display: block;
+      margin-top: 7px;
+      font-size: 13px;
+      color: var(--card-dim);
+      cursor: pointer;
+      text-align: right;
+      pointer-events: all;
+    }
+    .note-dismiss:hover { color: var(--red); }
+
+    /* ── BOARD FOOTER ──────────────────────────────────────── */
+    .board-footer {
+      margin-top: 40px;
+      font-size: 15px;
+      color: var(--dim);
+      border-top: 1px solid rgba(200,190,160,0.1);
+      padding-top: 16px;
+    }
+    .board-footer em { color: rgba(120,110,90,0.6); font-style: normal; }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ─────────────────────────────────────────────── -->
+<header class="topbar">
+  <nav class="nav-tabs">
+    <button class="tab">Roster</button>
+    <button class="tab active">Tavern</button>
+    <button class="tab">Contracts</button>
+    <button class="tab">Inventory</button>
+    <button class="tab">Ledger</button>
+    <button class="tab">Creator</button>
+  </nav>
+  <div class="topbar-right">
+    <span class="gold-display"><span class="label">Gold</span>120 G</span>
+    <button class="next-day-btn">Next Day →</button>
+  </div>
+</header>
+
+<!-- ── MAIN ────────────────────────────────────────────────── -->
+<main class="main">
+
+  <div class="screen-header">
+    <h1 class="screen-title">Tavern Board</h1>
+    <div class="screen-meta">
+      <span>Day 1</span>
+      <span class="sep">·</span>
+      <span>Refreshes in 3 days</span>
+      <span class="sep">·</span>
+      <span>5 candidates available</span>
+    </div>
+  </div>
+
+  <div class="hero-grid">
+
+    <!-- TORMUND — tutorial highlighted -->
+    <div class="card-wrap" id="wrap-tormund">
+      <div class="hero-card" style="--tilt: -1.5deg; --portrait-bg: #7a5a38" id="card-tormund">
+        <div class="hero-portrait">T</div>
+        <div class="hero-name">Tormund</div>
+        <div class="hero-class-row"><span class="class-badge">Fighter</span> &nbsp;Lv 1</div>
+        <div class="hero-wage">12 G <span class="per">/ week</span></div>
+        <div class="traits" id="traits-tormund">
+          <span class="trait">Reliable</span>
+          <span class="trait unknown" id="hidden-tormund">? unknown</span>
+        </div>
+        <hr class="divider">
+        <div class="card-actions">
+          <button class="btn btn-interview" id="btn-int-tormund" onclick="interview('tormund', 'Stubborn')">Interview (2G)</button>
+          <button class="btn btn-hire" onclick="hire('tormund')">Hire</button>
+        </div>
+      </div>
+
+      <!-- Tutorial annotation -->
+      <div class="tutorial-wrap" id="tutorial-tormund">
+        <div class="chalk-outline"></div>
+        <div class="tutorial-note">
+          <div class="note-pin"></div>
+          <span class="note-text">Someone has to carry the torch.</span>
+          <span class="note-dismiss" onclick="dismissTutorial()">✕ dismiss</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYLA -->
+    <div class="card-wrap">
+      <div class="hero-card" style="--tilt: 1.2deg; --portrait-bg: #446638" id="card-syla">
+        <div class="hero-portrait">S</div>
+        <div class="hero-name">Syla</div>
+        <div class="hero-class-row"><span class="class-badge">Rogue</span> &nbsp;Lv 1</div>
+        <div class="hero-wage">14 G <span class="per">/ week</span></div>
+        <div class="traits" id="traits-syla">
+          <span class="trait">Light Fingers</span>
+          <span class="trait unknown" id="hidden-syla">? unknown</span>
+        </div>
+        <hr class="divider">
+        <div class="card-actions">
+          <button class="btn btn-interview" id="btn-int-syla" onclick="interview('syla', 'Greedy')">Interview (2G)</button>
+          <button class="btn btn-hire" onclick="hire('syla')">Hire</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROTHER ALDRIC -->
+    <div class="card-wrap">
+      <div class="hero-card" style="--tilt: -0.6deg; --portrait-bg: #4a4e72" id="card-aldric">
+        <div class="hero-portrait">A</div>
+        <div class="hero-name">Brother Aldric</div>
+        <div class="hero-class-row"><span class="class-badge">Cleric</span> &nbsp;Lv 1</div>
+        <div class="hero-wage">18 G <span class="per">/ week</span></div>
+        <div class="traits" id="traits-aldric">
+          <span class="trait">Devout</span>
+          <span class="trait">Stubborn</span>
+        </div>
+        <hr class="divider">
+        <div class="card-actions">
+          <button class="btn btn-interview" id="btn-int-aldric" disabled>Interview (2G)</button>
+          <button class="btn btn-hire" onclick="hire('aldric')">Hire</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARA -->
+    <div class="card-wrap">
+      <div class="hero-card" style="--tilt: 1.8deg; --portrait-bg: #48387a" id="card-mara">
+        <div class="hero-portrait">M</div>
+        <div class="hero-name">Mara</div>
+        <div class="hero-class-row"><span class="class-badge">Mage</span> &nbsp;Lv 1</div>
+        <div class="hero-wage">22 G <span class="per">/ week</span></div>
+        <div class="traits" id="traits-mara">
+          <span class="trait">Bookish</span>
+          <span class="trait unknown" id="hidden-mara">? unknown</span>
+        </div>
+        <hr class="divider">
+        <div class="card-actions">
+          <button class="btn btn-interview" id="btn-int-mara" onclick="interview('mara', 'Absent-minded')">Interview (2G)</button>
+          <button class="btn btn-hire" onclick="hire('mara')">Hire</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEX -->
+    <div class="card-wrap">
+      <div class="hero-card" style="--tilt: -1.1deg; --portrait-bg: #3e6444" id="card-dex">
+        <div class="hero-portrait">D</div>
+        <div class="hero-name">Dex</div>
+        <div class="hero-class-row"><span class="class-badge">Ranger</span> &nbsp;Lv 1</div>
+        <div class="hero-wage">15 G <span class="per">/ week</span></div>
+        <div class="traits" id="traits-dex">
+          <span class="trait">Keen Eye</span>
+          <span class="trait unknown" id="hidden-dex">? unknown</span>
+        </div>
+        <hr class="divider">
+        <div class="card-actions">
+          <button class="btn btn-interview" id="btn-int-dex" onclick="interview('dex', 'Lone Wolf')">Interview (2G)</button>
+          <button class="btn btn-hire" onclick="hire('dex')">Hire</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- .hero-grid -->
+
+  <div class="board-footer">
+    Board refreshes every 3 days. &nbsp;<em>Scout post (unlocks at Guild Hall) — request specific classes.</em>
+  </div>
+
+</main>
+
+<script>
+  function interview(id, revealedTrait) {
+    const hiddenEl = document.getElementById('hidden-' + id);
+    const btn = document.getElementById('btn-int-' + id);
+    if (!hiddenEl || !btn) return;
+    hiddenEl.textContent = revealedTrait;
+    hiddenEl.classList.remove('unknown');
+    hiddenEl.classList.add('revealed');
+    btn.disabled = true;
+    btn.textContent = 'Interviewed';
+  }
+
+  function hire(id) {
+    const card = document.getElementById('card-' + id);
+    if (!card) return;
+    card.classList.add('hired');
+    // If this was the tutorial card, dismiss the annotation too
+    if (id === 'tormund') dismissTutorial();
+  }
+
+  function dismissTutorial() {
+    const el = document.getElementById('tutorial-tormund');
+    if (el) el.style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
