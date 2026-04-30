@@ -19,6 +19,15 @@ Loot found in dungeons can be sold at:
 - **Merchants** — takes 2–3 days, 80% market value
 - **Private buyers** — takes time to find, 100–120% market value, sometimes asks for something back
 
+### Guard Duty
+Assign idle heroes to standing guard posts — merchant caravans, noble estates, city gates. No dungeon risk, steady but low pay.
+
+- Income is low (below what a dungeon run would net)
+- Raises **Public Reputation**
+- **Morale declines** over time — heroes find the work boring and beneath them
+- Heroes with high Greed (7+) resent the low pay faster; heroes with low Harm (0–2) tolerate it better
+- Useful for: filling payroll gaps between contracts, recovering injured heroes who can't fight, softening your Public Rep after dirty jobs
+
 ### Training Fees (late game)
 Once you have a high-level trainer on staff, you can charge other companies to use your training facilities. Passive income.
 
