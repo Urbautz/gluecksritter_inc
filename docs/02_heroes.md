@@ -32,10 +32,10 @@ Each stat is a **dice pool** — the number equals how many D10s are rolled for 
 | Stat | Dice pool used for |
 |---|---|
 | STR | Melee attacks, forcing doors, carrying capacity |
-| DEX | Ranged attacks, initiative, dodge, trap-disarm, retreat |
+| DEX | Ranged attacks, initiative, trap-disarm, retreat |
 | CON | Injury resistance, recovery speed; sets Max HP |
-| SMA | Spell power, trap-detection, dungeon-reading, resist fear |
-| CHA | Negotiation (lower retainer cost), party cohesion, morale recovery |
+| SMA | Spell power,  dungeon-reading, resist fear |
+| WIT | Wits, evation, trap-detection|
 
 Stats start at 1–4 for Level 1 heroes and cap at 10. Each level-up grants 2 stat points to allocate freely.
 
@@ -58,7 +58,7 @@ All checks roll a pool of D20s:
 
 **Critical check:** each 10 is rerolled as a D10. Tally the high rolls (≥ 6) and low rolls (≤ 5).
 - **Critical success** = high count × 4 > hits
-- **Critical failure** = low count × 3 > failures
+- **Critical failure** = low count × 4 > failures
 
 Both can trigger on the same roll. A critical amplifies the outcome — the game decides what that means per context (bonus damage, spectacular trap, etc.).
 

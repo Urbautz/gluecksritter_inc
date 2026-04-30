@@ -27,13 +27,15 @@ Maps are composed of square tiles on a grid. Each tile has a **type**:
 
 ### Rooms
 
-Tiles are grouped into **rooms** of varying shapes and sizes. Room types:
+Tiles are grouped into **rooms** of varying shapes and sizes. All themes share these abstract roles — concrete names vary by theme:
 
-- **Corridor** — narrow, single-file, ambush risk
-- **Chamber** — open space, tactical options
-- **Vault** — high loot, high security
-- **Barracks** — dense enemy spawns
-- **Boss Lair** — scripted encounter
+| Role | Function |
+|---|---|
+| Passage | Narrow connector, single-file movement, ambush risk |
+| Chamber | Open space, tactical options |
+| Vault | High loot, locked or guarded |
+| Barracks | Dense enemy spawns |
+| Boss Lair | Scripted encounter, always on the critical path |
 
 ### Map Sizes
 
@@ -48,19 +50,46 @@ Tiles are grouped into **rooms** of varying shapes and sizes. Room types:
 
 The **Dungeon Creator** is an in-game tool (used to auto-generate contract locations)
 
-### Generation Algorithm
+### Generation Algorithms
+
+Each theme uses an algorithm suited to its spatial feel:
+
+| Algorithm | How it works |
+|---|---|
+| BSP | Recursively splits space into rectangles; connects rooms with corridors. Structured, readable. |
+| Drunk-walk + CA | Walker carves a winding path; cellular automata smooths it into organic caves. |
+| Grid Tunnel | Regular grid of tunnels, rooms at intersections. Rigid and functional. |
+| Hub-and-Spoke | Large central room, tunnels radiating outward to satellite chambers. |
+| Scatter | Building footprints placed on canvas, connected by dirt paths. |
+
+### Generation Steps
 
 1. Place Entry tile
-2. Carve rooms using BSP (Binary Space Partitioning) or drunk-walk
-3. Connect rooms with corridors (minimum spanning tree + loops for interest)
+2. Run theme algorithm to carve rooms
+3. Connect rooms (minimum spanning tree + extra loops for interest)
 4. Place Exit at maximum distance from Entry
 5. Populate rooms with encounters scaled to dungeon difficulty tier
 6. Place traps, treasures, hazards according to dungeon theme
-7. Place Boss Room on the critical path, near Exit
+7. Place Boss Lair on the critical path, near Exit
 
 ### Dungeon Themes
 
-Theme affects tile art, enemy types, trap types, and loot tables:
+#### Layout & Room Types
+
+| Theme | Algorithm | Room Types |
+|---|---|---|
+| Crypt | BSP | Corridor, Burial Chamber, Ossuary, Boss Tomb |
+| Bandit Den | BSP | Corridor, Guard Room, Common Room, Stash Room, Boss Chamber |
+| Beast Lair | Drunk-walk + CA | Den Passage, Open Cave, Nesting Ground, Alpha Den |
+| Ruins | BSP | Collapsed Hall, Open Hall, Sealed Chamber, Golem Workshop, Boss Sanctum |
+| Sewer | Grid Tunnel | Tunnel, Junction, Cistern, Refuse Heap, Boss Chamber |
+| Dragon Hoard | Hub-and-Spoke | Narrow Pass, Treasure Hall, Roost, Boss Lair |
+| Forest | Drunk-walk + CA | Game Trail, Clearing, Druid Grove, Predator Den, Ancient Tree |
+| Prison | Grid Tunnel | Cell Block, Guard Post, Armoury, Torture Chamber, Warden's Office |
+| Fortress | BSP | Gatehouse, Barracks Hall, Great Hall, Armoury, Throne Room |
+| Abandoned Village | Scatter | Street, Ruined House, Cellar, Town Square, Village Hall |
+
+#### Content
 
 | Theme | Enemies | Traps | Loot Focus |
 |---|---|---|---|
@@ -70,12 +99,16 @@ Theme affects tile art, enemy types, trap types, and loot tables:
 | Ruins | Constructs, spirits | Collapsing floors | Ancient artefacts |
 | Sewer | Rats, thieves guild | Acid pools, flooding | Keys, documents |
 | Dragon Hoard | Drakes, dragonkin | Fire vents, magical wards | Gold, legendary weapons |
+| Forest | Druids, fey, beasts | Snares, pitfalls, poisoned thorns | Herbs, fey tokens, rare pelts |
+| Prison | Guards, prisoners, corrupt warden | Barred doors, alarm bells | Weapons, confiscated gear, keys |
+| Fortress | Soldiers, knights, mages | Arrow slits, portcullises, oil traps | Military gear, war chest, maps |
+| Abandoned Village | Bandits, cultists, ghosts | Hidden cellars, cursed objects | Household valuables, hidden coin |
 
 ## Encounters
 
 ### Enemy Stats
 
-Enemies have simplified stats mirroring hero stats: HP, STR, DEX, SMA, Initiative pool, Special Abilities.
+Enemies have simplified stats mirroring hero stats: HP, STR, DEX, SMA, WIT, Initiative pool, Special Abilities and an Armor rating.
 
 Enemy difficulty is rated **CR (Challenge Rating)** 1–10. CR maps directly to approximate pool sizes:
 - CR 1–2: pools of 2–3 dice (fodder)
@@ -91,20 +124,20 @@ Combat is **automated and dice-pool-based** (visible to the player as animated e
 Each combatant rolls their **DEX pool** at the start of combat. Net result determines turn order (highest net goes first; ties broken by raw DEX value).
 
 #### Attack
-Attacker rolls their relevant pool (**STR** for melee, **DEX** for ranged, **SMA** for spells).  
-Defender rolls their **DEX pool** (dodge/parry).  
-Outcome is determined by comparing nets:
+Attacker rolls their relevant pool (**STR** for melee, **DEX** for ranged, **SMA** for spells) + possible bonuses
+Defender roles their relevant pool (**WIT** or **SMA*) + possible bonuses
+Outcome is determined by comparing Nets (Criticals double the net)
 
 | Attacker net vs Defender net | Result |
 |---|---|
 | Attacker net > Defender net | Hit — damage = attacker net |
-| Equal | Glancing blow — 1 damage |
+| Equal | Glancing blow — half damage |
 | Defender net > Attacker net | Miss |
 
-**Critical hit** (attacker rolls crit): damage multiplied by (1 + crit magnitude). A 30% magnitude crit on a net-3 hit deals ~4 damage instead of 3.
-
 #### Damage & HP
-Damage dealt reduces HP directly. No separate armor roll — equipment grants **bonus dice to the DEX defend pool** (heavier armor = more dice, but also reduces DEX pool for initiative and movement checks).
+Damage = **weapon base value + attacker's net hits** (×2 on a critical hit). 
+Armor grants **Damage Reduction (DR)** — subtract DR from incoming damage before applying to HP.
+Damage is always at least 1.
 
 #### Special Abilities
 Trigger on specific conditions: flanking (+1 die to attacker), low HP (below 30% triggers fear SMA check), enemy type bonuses (Undead ignore fear, Constructs immune to poison).
