@@ -50,15 +50,23 @@ Two separate reputation tracks:
 
 ### Street Reputation (0–100)
 How well-known and feared/respected you are in the underworld and adventurer community.  
-- High: better hero candidates show up, higher-tier contracts available, heroes accept lower wages (want to work for you)
-- Low: scraping the bottom of the barrel for recruits
+- High: higher-tier contracts available, criminal and guild clients seek you out
+- Low: ignored by serious clients, scraping for low-value jobs
 
 ### Public Reputation (0–100)
 How legitimate you appear to authorities and nobility.  
 - High: city permits cheaper, noble clients available, fewer legal hassles
 - Low: guards may shake you down, certain contracts unavailable, possible crackdowns
 
-These two tracks often pull against each other. Taking dirty work raises Street Rep and lowers Public Rep.
+### Hero Reputation (0–100)
+How you are known as an employer among the adventuring community.  
+- High: higher-level candidates and rare classes appear on the Tavern Board; heroes accept slightly lower wages to work for a company with a good name
+- Low: only desperate or low-level candidates show up; skilled heroes avoid you
+
+**Raised by:** heroes surviving runs, timely pay, successful missions, equipping heroes well.  
+**Lowered by:** hero deaths, abandoning heroes in dungeons, chronic late pay, sending heroes on jobs that violate their ethics.
+
+The three tracks often pull in different directions. Taking dirty work raises Street Rep and lowers Public Rep. Grinding heroes through deadly dungeons may earn Street Rep but destroys Hero Rep.
 
 ## Headquarters
 

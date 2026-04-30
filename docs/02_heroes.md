@@ -8,7 +8,7 @@ Heroes are hired from the **Tavern Board** — a rotating pool of available cand
 - A visible asking wage (weekly retainer + quest cut %)
 - A partially hidden profile (full stats revealed after hiring or with an "Interview" action that costs a small fee)
 
-Starting heroes are always Level 1. Higher-level heroes can appear but cost significantly more and are rarer. The level that appears also 
+Starting heroes are always Level 1. Higher-level heroes can appear but cost significantly more and are rarer. The level and class range that appears on the board scales with your **Hero Reputation** — a company with a bad name only attracts the desperate.
 
 ## Classes
 

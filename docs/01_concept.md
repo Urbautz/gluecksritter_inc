@@ -25,14 +25,6 @@ There is no single win state — the game is an ongoing operation. You succeed b
 
 Optional campaign mode: reach a target net worth within a time limit, or complete a chain of story contracts.
 
-## High-Level Loop
-
-```
-Recruit → Train → Equip → Contract → Dungeon Run → Payday → Reinvest
-                ↑_______________________________________________|
-```
-
-Each cycle takes in-game days. Multiple parties can run simultaneously once you have the staff.
 
 ## Platform
 
