@@ -23,6 +23,24 @@ Starting heroes are always Level 1. Higher-level heroes can appear but cost sign
 
 More classes can be added as expansions.
 
+## Races
+
+Race is fixed at creation. It adjusts starting stats and grants one passive trait. Stat modifiers apply only to the starting values — level-up points are allocated freely regardless of race.
+
+| Race | Stat Modifiers | Passive | Class Affinities |
+|---|---|---|---|
+| Human | — | +2 random attributes, -1 random attribute | All classes |
+| Dwarf | +1 CON, +1 STR, −1 SMA | **Stoneborn** — bonus die to trap detection in underground themes (Crypt, Ruins, Sewer, Prison); immune to poison | Fighter, Cleric |
+| Elf | +1 DEX, +1 SMA, −1 CON | **Keen Senses** — always detects ambushes before the party walks in; bonus die vs fear effects in Forest theme | Ranger, Mage |
+| Half-Elf | +1 WIT | **Silver Tongue** — party morale losses from failed runs are reduced by 5; | Bard, Rogue |
+| Gnome | +1 WIT, +1 DEX, −1 STR | **Tinkerer** — bonus die to trap disarm; automatically reveals Secret tiles when adjacent | Rogue, Mage |
+| Half-Orc | +1 STR, +1 CON, −1 SMA, −1 WIT | **Sturdy** 10% natural Damage Reduction | Fighter |
+
+### Notes
+- Stat modifiers can push a starting value below 1 (minimum 1 applies after modifiers).
+- Race does not restrict class choice — it only nudges the stat spread and adds a niche.
+- Half-Elf and Gnome have narrower modifiers; they trade raw power for utility.
+
 ## Stats
 
 ### Core Stats (1–10 scale)
