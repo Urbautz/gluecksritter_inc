@@ -43,19 +43,24 @@ Stats start at 1–4 for Level 1 heroes and cap at 10. Each level-up grants 2 st
 
 ### Dice Pool Resolution
 
-All checks roll a pool of D10s:
+All checks roll a pool of D20s:
 
 | Face | Meaning |
 |---|---|
-| 7, 8, 9 | Hit (success) |
-| 1, 2 | Failure (glitch) |
-| 0 | Critical indicator |
-| 3–6 | Neutral |
+| 20 | 2 hits |
+| 18, 19 | 1 hit |
+| 2 | 1 failure |
+| 1 | 2 failures |
+| 10 | Crit die — rolled separately as a D10 |
+| 3–9, 11–17 | Neutral |
 
-**Net = hits − failures.**  
-**Critical success** = count(0s) > count(failures 1+2).  
-**Critical failure** = count(0s) > count(hits 7+8+9).  
-Both can trigger on the same roll if 0s dominate everything. A critical flag amplifies the outcome — the game decides what that means per context (bonus damage, spectacular trap, etc.).
+**Net = hits − failures.** Tens do not contribute to the net.
+
+**Critical check:** each 10 is rerolled as a D10. Tally the high rolls (≥ 6) and low rolls (≤ 5).
+- **Critical success** = high count × 4 > hits
+- **Critical failure** = low count × 3 > failures
+
+Both can trigger on the same roll. A critical amplifies the outcome — the game decides what that means per context (bonus damage, spectacular trap, etc.).
 
 
 ### Derived Stats

@@ -5,219 +5,333 @@
 <title>Glückritter Inc — Dice Pool Simulator</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #1a1a2e; color: #e0e0e0; font-family: monospace; padding: 2rem; }
-  h1 { color: #f0c040; margin-bottom: 0.25rem; }
-  p.subtitle { color: #888; margin-bottom: 1.5rem; font-size: 0.9rem; }
 
-  .rule-box {
-    background: #12122a; border: 1px solid #333; border-radius: 6px;
-    padding: 0.9rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.82rem; line-height: 2;
+  body {
+    background: linear-gradient(160deg, #0a0a18 0%, #131328 60%, #0f1020 100%);
+    min-height: 100vh;
+    color: #d8d8ec;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 2.5rem 2rem 3rem;
   }
-  .rule-box table { border-collapse: collapse; width: 100%; }
-  .rule-box td { padding: 0 0.8rem 0 0; vertical-align: top; }
-  .hit  { color: #4caf50; }
-  .fail { color: #ef5350; }
-  .crit { color: #f0c040; }
-  .neu  { color: #888; }
 
+  /* ── Header ─────────────────────────────────────── */
+  header { margin-bottom: 2rem; }
+  h1 {
+    font-size: 1.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #f0c040;
+    text-shadow: 0 0 24px rgba(240,192,64,0.35);
+    margin-bottom: 0.2rem;
+  }
+  p.subtitle { color: #555; font-size: 0.8rem; letter-spacing: 0.05em; }
+
+  /* ── Rule box ────────────────────────────────────── */
+  .rule-box {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem;
+    background: #0c0c20; border: 1px solid #252545;
+    border-left: 3px solid #f0c040;
+    border-radius: 0 6px 6px 0;
+    padding: 0.85rem 1.2rem; margin-bottom: 1.8rem;
+    font-size: 0.8rem; align-items: center;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    background: #13132c; border: 1px solid #2e2e50;
+    border-radius: 4px; padding: 0.2rem 0.55rem;
+    font-size: 0.78rem;
+  }
+  .chip .face { font-weight: bold; font-size: 0.9rem; }
+  .chip.hit  .face { color: #4caf50; }
+  .chip.fail .face { color: #ef5350; }
+  .chip.crit .face { color: #f0c040; }
+  .chip.neu  .face { color: #666; }
+  .rule-note { color: #666; font-size: 0.74rem; width: 100%; padding-top: 0.2rem; }
+  .rule-note b { color: #a0a0c0; }
+  .hl-cs { color: #f0c040; }
+  .hl-cf { color: #d060f0; }
+
+  /* ── Controls ────────────────────────────────────── */
   .controls {
-    display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: flex-end;
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 2rem; align-items: flex-end;
+    background: #0c0c20; border: 1px solid #252545;
+    border-radius: 6px; padding: 0.9rem 1.1rem;
   }
   .ctrl-group { display: flex; flex-direction: column; gap: 0.3rem; }
-  label { font-size: 0.78rem; color: #aaa; }
+  label { font-size: 0.72rem; color: #777; letter-spacing: 0.04em; text-transform: uppercase; }
   input[type=number] {
-    background: #0f0f1f; border: 1px solid #444; color: #f0c040;
-    padding: 0.4rem 0.6rem; width: 80px; font-family: monospace; font-size: 0.95rem;
-    border-radius: 4px;
+    background: #08081a; border: 1px solid #353560;
+    color: #f0c040; padding: 0.4rem 0.6rem; width: 82px;
+    font-family: inherit; font-size: 0.95rem; border-radius: 4px;
+    outline: none; transition: border-color 0.15s;
   }
-  select {
-    background: #0f0f1f; border: 1px solid #444; color: #e0e0e0;
-    padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.9rem;
-    border-radius: 4px;
-  }
+  input[type=number]:focus { border-color: #f0c040; }
   button {
-    background: #f0c040; color: #1a1a2e; border: none; padding: 0.5rem 1.4rem;
-    font-family: monospace; font-size: 1rem; font-weight: bold;
+    background: #f0c040; color: #08081a; border: none;
+    padding: 0.5rem 1.6rem; font-family: inherit; font-size: 0.95rem;
+    font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;
     cursor: pointer; border-radius: 4px;
+    box-shadow: 0 0 12px rgba(240,192,64,0.25);
+    transition: background 0.12s, box-shadow 0.12s;
   }
-  button:hover { background: #ffd060; }
+  button:hover { background: #ffd060; box-shadow: 0 0 20px rgba(240,192,64,0.45); }
+  button:active { background: #d4a820; }
 
+  button.toggle {
+    background: transparent; color: #555;
+    border: 1px solid #353560; box-shadow: none;
+    padding: 0.5rem 1rem; font-size: 0.8rem;
+  }
+  button.toggle:hover { background: #13132c; color: #aaa; box-shadow: none; }
+  button.toggle.active { border-color: #f0c040; color: #f0c040; }
+
+  /* ── Panels ──────────────────────────────────────── */
   .results { display: flex; gap: 1.2rem; flex-wrap: wrap; }
   .panel {
-    background: #12122a; border: 1px solid #333; border-radius: 6px;
-    padding: 1.1rem 1.3rem; flex: 1; min-width: 270px;
+    background: #0c0c20;
+    border: 1px solid #252545;
+    border-top: 3px solid #f0c040;
+    border-radius: 0 0 8px 8px;
+    padding: 1.2rem 1.4rem;
+    flex: 1; min-width: 280px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
   }
-  .panel h2 { color: #f0c040; margin-bottom: 0.2rem; font-size: 1rem; }
-  .panel .pool-detail { color: #666; font-size: 0.75rem; margin-bottom: 1rem; }
+  .panel h2 {
+    color: #f0c040; font-size: 1.05rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
 
-  .stat-grid { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; margin-bottom: 1rem; }
-  .sl { color: #888; font-size: 0.8rem; }
-  .sv { font-size: 0.8rem; }
+  /* ── Stat grid ───────────────────────────────────── */
+  .stat-grid {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 0.2rem 0.8rem; margin-bottom: 0.4rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #1c1c38;
+  }
+  .sl { color: #555; font-size: 0.76rem; align-self: center; }
+  .sv { font-size: 0.82rem; text-align: right; font-weight: bold; }
   .sv.good  { color: #4caf50; }
   .sv.bad   { color: #ef5350; }
   .sv.gold  { color: #f0c040; }
-  .sv.amber { color: #ff9800; }
+  .sv.purple{ color: #d060f0; }
+  .sv.dim   { color: #777; }
 
-  .sect { color: #aaa; font-size: 0.75rem; margin: 0.9rem 0 0.35rem; border-bottom: 1px solid #222; padding-bottom: 0.2rem; }
-
-  .bar-row { display: flex; align-items: center; gap: 0.4rem; margin: 2px 0; font-size: 0.76rem; }
-  .bar-label { width: 38px; text-align: right; color: #bbb; }
-  .bar-track { flex: 1; background: #1e1e3a; border-radius: 2px; height: 13px; overflow: hidden; }
-  .bar-fill  { height: 100%; border-radius: 2px; }
-  .bar-fill.pos  { background: #4caf50; }
-  .bar-fill.neg  { background: #ef5350; }
-  .bar-fill.zero { background: #888; }
-  .bar-fill.cs   { background: #f0c040; }
-  .bar-fill.cf   { background: #e040fb; }
-  .bar-pct { width: 36px; color: #777; font-size: 0.73rem; }
-
-  .outcome-legend {
-    font-size: 0.75rem; color: #666; margin-top: 1rem; line-height: 1.7;
+  /* ── Bar chart ───────────────────────────────────── */
+  .sect {
+    color: #444; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    margin: 1rem 0 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
   }
+  .sect::after { content: ''; flex: 1; height: 1px; background: #1c1c38; }
+
+  .bar-row { display: flex; align-items: center; gap: 0.5rem; margin: 3px 0; font-size: 0.74rem; }
+  .bar-label { width: 34px; text-align: right; color: #666; }
+  .bar-track { flex: 1; background: #080818; border-radius: 3px; height: 15px; overflow: hidden; }
+  .bar-wrap   { display: flex; height: 100%; }
+  .bar-seg    { height: 100%; transition: width 0.3s ease; }
+
+  .bar-seg.pos    { background: linear-gradient(90deg, #2e7d32, #4caf50); }
+  .bar-seg.neg    { background: linear-gradient(90deg, #b71c1c, #ef5350); }
+  .bar-seg.zero   { background: #3a3a5a; }
+  .bar-seg.crit-s { background: linear-gradient(90deg, #c8960a, #f0c040); }
+  .bar-seg.crit-f { background: linear-gradient(90deg, #8e24aa, #d060f0); }
+
+  .bar-pct { width: 58px; color: #666; font-size: 0.71rem; text-align: right; }
+  .bar-crit-pct { font-size: 0.68rem; color: #888; min-width: 50px; text-align: right; }
+  .bar-crit-pct.cs { color: #c8960a; }
+  .bar-crit-pct.cf { color: #8e24aa; }
+
+  /* ── Legend ──────────────────────────────────────── */
+  .outcome-legend {
+    font-size: 0.72rem; color: #444; margin-top: 1.8rem; line-height: 2;
+    border-top: 1px solid #1c1c38; padding-top: 1rem;
+  }
+  .outcome-legend b { color: #666; }
 </style>
 </head>
 <body>
 
-<h1>Glückritter Inc — Dice Pool Simulator</h1>
-<p class="subtitle">D10 pool resolution system</p>
+<header>
+  <h1>Glückritter Inc — Dice Simulator</h1>
+  <p class="subtitle">D20 pool · Monte Carlo</p>
+</header>
 
 <div class="rule-box">
-  <table><tr>
-    <td><span class="hit">7, 8, 9</span> → hit</td>
-    <td><span class="fail">1, 2</span> → failure</td>
-    <td><span class="crit">0</span> → crit indicator</td>
-    <td><span class="neu">3–6</span> → neutral</td>
-  </tr></table>
-  <div style="margin-top:0.4rem">
+  <div class="chip hit"><span class="face">20</span> 2 hits</div>
+  <div class="chip hit"><span class="face">18 19</span> 1 hit</div>
+  <div class="chip fail"><span class="face">1</span> 2 failures</div>
+  <div class="chip fail"><span class="face">2</span> 1 failure</div>
+  <div class="chip crit"><span class="face">10</span> D10 crit roll (neutral for net)</div>
+  <div class="chip neu"><span class="face">rest</span> neutral</div>
+  <div class="rule-note">
     <b>Net = hits − failures</b> &nbsp;·&nbsp;
-    <span class="crit">Critical success</span> when 0s &gt; failures &nbsp;·&nbsp;
-    <span style="color:#e040fb">Critical failure</span> when 0s &gt; hits
+    Each <b>10</b> is rerolled as a D10:
+    D10 ≥ 6 count × 4 &gt; hits → <span class="hl-cs">crit success</span> &nbsp;·&nbsp;
+    D10 ≤ 5 count × 3 &gt; failures → <span class="hl-cf">crit failure</span>
+    &nbsp;(both can fire)
   </div>
 </div>
 
 <div class="controls">
-  <div class="ctrl-group"><label>Pool A</label><input type="number" id="poolA" value="3" min="1" max="60"></div>
+  <div class="ctrl-group"><label>Pool A</label><input type="number" id="poolA" value="3"  min="1" max="60"></div>
   <div class="ctrl-group"><label>Pool B</label><input type="number" id="poolB" value="10" min="1" max="60"></div>
   <div class="ctrl-group"><label>Pool C</label><input type="number" id="poolC" value="25" min="1" max="60"></div>
-  <div class="ctrl-group">
-    <label>Morale state</label>
-    <select id="morale">
-      <option value="motivated">Motivated (+1 die)</option>
-      <option value="content" selected>Content (normal)</option>
-      <option value="disgruntled">Disgruntled (−1 die, glitches ×2)</option>
-    </select>
-  </div>
   <div class="ctrl-group"><label>Trials</label><input type="number" id="trials" value="200000" min="1000" max="2000000" step="10000"></div>
   <button onclick="runAll()">Simulate</button>
+  <button id="toggleBtn" class="toggle" onclick="toggleMode()">% / #</button>
 </div>
 
 <div class="results" id="results"></div>
 
 <div class="outcome-legend">
   <b>Net → outcome:</b>
-  ≤−3 catastrophic failure &nbsp;·&nbsp; −2/−1 failure &nbsp;·&nbsp; 0 partial/costly &nbsp;·&nbsp;
-  +1/+2 success &nbsp;·&nbsp; +3/+4 strong &nbsp;·&nbsp; +5+ overwhelming<br>
-  A critical flag amplifies the outcome — the game decides what that means per context.
+  ≤−3 catastrophic &nbsp;·&nbsp; −2/−1 failure &nbsp;·&nbsp; 0 partial &nbsp;·&nbsp;
+  +1/+2 success &nbsp;·&nbsp; +3/+4 strong &nbsp;·&nbsp; +5+ overwhelming
+  &nbsp;·&nbsp; <span class="hl-cs">■</span> crit success &nbsp;·&nbsp; <span class="hl-cf">■</span> crit failure
 </div>
 
 <script>
-function rollDie() { return Math.floor(Math.random() * 10); }
+let lastResults = [];
+let showAbs = false;
 
-function simulate(basePools, moraleKey, trials) {
-  return basePools.map(basePool => {
-    // Apply morale modifier to pool size
-    let pool = basePool;
-    let glitchDouble = false;
-    if (moraleKey === 'motivated') pool = basePool + 1;
-    if (moraleKey === 'disgruntled') { pool = Math.max(1, basePool - 1); glitchDouble = true; }
+function rollD20() { return Math.floor(Math.random() * 20) + 1; }
+function rollD10() { return Math.floor(Math.random() * 10) + 1; }
 
-    const netDist = {};
+function evalD20(v) {
+  if (v === 20) return [2, 0];
+  if (v >= 18)  return [1, 0];
+  if (v === 1)  return [0, 2];
+  if (v === 2)  return [0, 1];
+  return [0, 0]; // 10 is neutral for net
+}
+
+function simulate(pools, trials) {
+  return pools.map(pool => {
+    const netDist     = {};
+    const netCritDist = {};
     let critSuccessCount = 0, critFailCount = 0;
 
     for (let t = 0; t < trials; t++) {
-      let hits = 0, failures = 0, zeros = 0;
+      let hits = 0, failures = 0, critDice = 0;
       for (let d = 0; d < pool; d++) {
-        const v = rollDie();
-        if (v >= 7) hits++;
-        if (v === 1 || v === 2) failures += glitchDouble ? 2 : 1;
-        if (v === 0) zeros++;
+        const v = rollD20();
+        if (v === 10) {
+          critDice++;
+        } else {
+          const [h, f] = evalD20(v);
+          hits += h; failures += f;
+        }
       }
-      const net = hits - failures;
-      netDist[net] = (netDist[net] ?? 0) + 1;
 
-      if (zeros > failures) critSuccessCount++;
-      if (zeros > hits)     critFailCount++;
+      // Roll crit dice as D10s
+      let critHigh = 0, critLow = 0;
+      for (let c = 0; c < critDice; c++) {
+        const d = rollD10();
+        if (d >= 6) critHigh++; else critLow++;
+      }
+
+      const net = hits - failures;
+      const critSuccess = critHigh * 4 > hits;
+      const critFail    = critLow  * 3 > failures;
+
+      netDist[net] = (netDist[net] ?? 0) + 1;
+      if (critSuccess || critFail) {
+        netCritDist[net] = (netCritDist[net] ?? 0) + 1;
+        if (critSuccess) critSuccessCount++;
+        if (critFail)    critFailCount++;
+      }
     }
 
-    return { basePool, pool, moraleKey, glitchDouble, trials, netDist,
-             critSuccessCount, critFailCount };
+    return { pool, trials, netDist, netCritDist, critSuccessCount, critFailCount };
   });
 }
 
-function bar(label, pct, maxPct, cls) {
-  const w = maxPct > 0 ? (pct / maxPct * 100).toFixed(1) : 0;
+function fmt(count, trials) {
+  return showAbs ? count.toLocaleString() : `${(count / trials * 100).toFixed(1)}%`;
+}
+
+function bar(label, totalCount, critCount, maxCount, trials, mainCls, critCls) {
+  const totalW   = maxCount > 0 ? (totalCount / maxCount * 100) : 0;
+  const critFrac = totalCount > 0 ? (critCount / totalCount * 100) : 0;
+  const baseFrac = 100 - critFrac;
+  const showCrit = showAbs ? critCount > 0 : (critCount / trials * 100) >= 0.05;
+  const critLabel = showCrit
+    ? `<div class="bar-crit-pct ${critCls === 'crit-s' ? 'cs' : 'cf'}">${fmt(critCount, trials)}</div>`
+    : `<div class="bar-crit-pct"></div>`;
+
   return `<div class="bar-row">
     <div class="bar-label">${label}</div>
-    <div class="bar-track"><div class="bar-fill ${cls}" style="width:${w}%"></div></div>
-    <div class="bar-pct">${pct.toFixed(1)}%</div>
+    <div class="bar-track">
+      <div class="bar-wrap" style="width:${totalW.toFixed(1)}%">
+        <div class="bar-seg ${mainCls}" style="width:${baseFrac.toFixed(1)}%"></div>
+        <div class="bar-seg ${critCls}"  style="width:${critFrac.toFixed(1)}%"></div>
+      </div>
+    </div>
+    <div class="bar-pct">${fmt(totalCount, trials)}</div>
+    ${critLabel}
   </div>`;
 }
 
 function renderPanel(r) {
-  const { basePool, pool, moraleKey, glitchDouble, trials, netDist,
-          critSuccessCount, critFailCount } = r;
+  const { pool, trials, netDist, netCritDist, critSuccessCount, critFailCount } = r;
 
   const nets = Object.keys(netDist).map(Number).sort((a,b)=>a-b);
   let meanNet = 0;
   for (const n of nets) meanNet += n * (netDist[n] / trials);
-  const pPos  = nets.filter(n=>n>0).reduce((s,n)=>s+(netDist[n]??0)/trials,0)*100;
-  const pZero = ((netDist[0]??0)/trials)*100;
-  const pNeg  = nets.filter(n=>n<0).reduce((s,n)=>s+(netDist[n]??0)/trials,0)*100;
-  const pCS   = critSuccessCount / trials * 100;
-  const pCF   = critFailCount    / trials * 100;
-  const pBoth = /* both flags can fire together */ 'n/a';
 
-  const maxNetPct = Math.max(...nets.map(n=>(netDist[n]??0)/trials*100));
+  const cPos  = nets.filter(n=>n>0).reduce((s,n)=>s+(netDist[n]??0),0);
+  const cZero = netDist[0] ?? 0;
+  const cNeg  = nets.filter(n=>n<0).reduce((s,n)=>s+(netDist[n]??0),0);
+
+  const maxCount = Math.max(...nets.map(n => netDist[n] ?? 0));
   const netBars = nets.map(n => {
-    const pct = (netDist[n]??0)/trials*100;
-    const cls = n > 0 ? 'pos' : n < 0 ? 'neg' : 'zero';
-    return bar(n > 0 ? `+${n}` : `${n}`, pct, maxNetPct, cls);
+    const mainCls = n > 0 ? 'pos' : n < 0 ? 'neg' : 'zero';
+    const critCls = n > 0 ? 'crit-s' : 'crit-f';
+    return bar(n > 0 ? `+${n}` : `${n}`, netDist[n] ?? 0, netCritDist[n] ?? 0, maxCount, trials, mainCls, critCls);
   }).join('');
 
-  const moraleLabel = { motivated:'Motivated (+1 die)', content:'Content', disgruntled:'Disgruntled (−1 die, glitches ×2)' }[moraleKey];
-  const poolDetail = pool !== basePool ? `base ${basePool} → effective ${pool} dice` : `${pool} dice`;
+  const mnCls = meanNet > 0.05 ? 'good' : meanNet < -0.05 ? 'bad' : 'dim';
 
   const div = document.createElement('div');
   div.className = 'panel';
   div.innerHTML = `
-    <h2>${basePool} dice</h2>
-    <div class="pool-detail">${moraleLabel} · ${poolDetail}${glitchDouble ? ' · each 1/2 = ×2 failures' : ''}</div>
-
+    <h2>${pool} dice</h2>
     <div class="stat-grid">
-      <span class="sl">Mean net</span>
-      <span class="sv ${meanNet>0?'good':meanNet<0?'bad':''}">${meanNet.toFixed(2)}</span>
-      <span class="sl">P(net &gt; 0)</span>  <span class="sv good">${pPos.toFixed(1)}%</span>
-      <span class="sl">P(net = 0)</span>   <span class="sv">${pZero.toFixed(1)}%</span>
-      <span class="sl">P(net &lt; 0)</span>  <span class="sv bad">${pNeg.toFixed(1)}%</span>
-      <span class="sl">Critical success</span> <span class="sv gold">${pCS.toFixed(1)}%</span>
-      <span class="sl">Critical failure</span> <span class="sv" style="color:#e040fb">${pCF.toFixed(1)}%</span>
+      <span class="sl">Mean net</span>         <span class="sv ${mnCls}">${meanNet.toFixed(2)}</span>
+      <span class="sl">Success</span>           <span class="sv good">${fmt(cPos, trials)}</span>
+      <span class="sl">Partial</span>           <span class="sv dim">${fmt(cZero, trials)}</span>
+      <span class="sl">Failure</span>           <span class="sv bad">${fmt(cNeg, trials)}</span>
+      <span class="sl">Crit success</span>      <span class="sv gold">${fmt(critSuccessCount, trials)}</span>
+      <span class="sl">Crit failure</span>      <span class="sv purple">${fmt(critFailCount, trials)}</span>
     </div>
-
-    <div class="sect">Net result distribution</div>
+    <div class="sect">distribution</div>
     ${netBars}
   `;
   return div;
 }
 
+function rerender() {
+  const out = document.getElementById('results');
+  out.innerHTML = '';
+  for (const r of lastResults) out.appendChild(renderPanel(r));
+}
+
+function toggleMode() {
+  showAbs = !showAbs;
+  const btn = document.getElementById('toggleBtn');
+  btn.textContent = showAbs ? '# / %' : '% / #';
+  btn.classList.toggle('active', showAbs);
+  rerender();
+}
+
 function runAll() {
-  const trials  = Math.max(1000, parseInt(document.getElementById('trials').value) || 200000);
-  const pools   = ['poolA','poolB','poolC'].map(id => Math.max(1, parseInt(document.getElementById(id).value)||1));
-  const morale  = document.getElementById('morale').value;
-  const out     = document.getElementById('results');
-  out.innerHTML = '<span style="color:#888">Simulating…</span>';
+  const trials = Math.max(1000, parseInt(document.getElementById('trials').value) || 200000);
+  const pools  = ['poolA','poolB','poolC'].map(id => Math.max(1, parseInt(document.getElementById(id).value)||1));
+  const out    = document.getElementById('results');
+  out.innerHTML = '<span style="color:#333;font-size:0.8rem">simulating…</span>';
   setTimeout(() => {
-    out.innerHTML = '';
-    for (const r of simulate(pools, morale, trials)) out.appendChild(renderPanel(r));
+    lastResults = simulate(pools, trials);
+    rerender();
   }, 20);
 }
 
