@@ -46,7 +46,7 @@ List of all hired heroes. Each row shows:
 
 Clicking a hero opens their **Hero Detail Panel**:
 - Full stats: STR / DEX / CON / SMA / WIT (each shows pool size and any active modifiers)
-- Equipment slots (drag-and-drop equip/unequip)
+- Equipment slots (drag-and-drop equip/unequip) — all body-part slots visible: Helm, Earrings ×2, Torso Under-Armor, Torso Armor, Gloves, Belt, Legs Under-Armor, Legs Armor, Socks, Boots, Cloak, Amulet, Rings ×10, Main Hand, Off-Hand, Tool
 - Ethics profile (visible after hiring) — Willingness to Do Harm and Greed axes
 - Class abilities (unlocked at each level-up)
 - Relationships and notes
@@ -105,10 +105,38 @@ The main event screen. Shows:
 ## Inventory / Equipment Screen
 
 Two-panel view:
-- Left: Stash of all unequipped items
-- Right: Roster with equipment slots per hero
+- **Left — Stash:** grid of all unequipped items, sorted by slot type. Filter buttons at top: All / Weapons / Armor / Accessories / Tools. Item cards show name, rarity dot, and a small stat-modifier summary. "Sell All Junk" button culls everything below Uncommon rarity with one click.
+- **Right — Hero Equipment:** tabbed by hero. Active hero's silhouette in the centre with labelled slot hotspots. Slots with items show the item name and durability bar; empty slots glow faintly as drop targets.
 
-Drag items from stash to hero slots. Item tooltips show full stats and sell value. "Sell All Junk" button for fast cleanup.
+Drag items from stash onto a slot to equip. Drag off a slot back to stash to unequip. If a hero fails to meet an item's stat requirements, the slot border turns red and the penalty is shown on the stat panel.
+
+### Slot Layout on the Hero Silhouette
+
+```
+            ◁ [ Earring ]  [ Helm ]  [ Earring ] ▷
+                  [ Amulet ]     [ Cloak ]
+         [ Torso Under-Armor + Torso Armor ]
+         [ Gloves ]             
+         [ Main Hand ]           [ Off-Hand ]
+                     [ Belt ]
+         [ Legs Under-Armor  + Legs Armor  ]
+               [ Socks  +  Boots ]
+
+   ┌─ Rings ──────────────────────────┐
+   │  ○ ○ ○ ○ ○   ○ ○ ○ ○ ○          │
+   │  Left hand   Right hand          │
+   └──────────────────────────────────┘
+```
+
+- Layered slots (torso, legs, feet) show two stacked mini-slots; the inner layer is slightly indented.
+- Ring row shows all ten finger slots. Unequipped rings appear as empty circles; equipped ones show the ring's colour-coded rarity dot.
+- Hovering any equipped item opens a tooltip: full stat block, requirement thresholds (green if met, red if not), durability bar, sell value.
+
+### Requirement Warnings
+
+- If a hero equips an item without meeting its stat requirements, the slot glows amber and a small warning badge appears: "−X [STAT] die".
+- The warning also propagates to the stat block on the left side of the detail panel, showing the net effective dice pool after all penalties.
+- The player is never blocked from equipping — the warning is informational, not a hard lock (except class-restricted items, which cannot be dropped into slots at all and show a red X on hover).
 
 ## Finance / Ledger
 
