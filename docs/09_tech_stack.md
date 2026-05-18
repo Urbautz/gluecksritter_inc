@@ -62,6 +62,7 @@ Game state is serialized to JSON and stored in `localStorage` under key `gluecks
 - Inventory / stash
 - HQ tier and unlocked features
 - Transaction log (last 100 entries)
+- Tutorial state (completed hint IDs; empty array = tutorial active, `null` = skipped entirely)
 
 Save is written after every significant action (end of day, run completion, hire/fire).
 
