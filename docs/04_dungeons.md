@@ -70,7 +70,8 @@ Each theme uses an algorithm suited to its spatial feel:
 4. Place Exit at maximum distance from Entry
 5. Populate rooms with encounters scaled to dungeon Danger Level
 6. Place traps, treasures, hazards according to dungeon theme
-7. Place Boss Lair on the critical path, near Exit
+7. Roll for Uber-Boss (5% chance): if triggered, replace Boss with Uber-Boss and mark dungeon as flagged
+8. Place Boss Lair on the critical path, near Exit
 
 ### Dungeon Themes
 

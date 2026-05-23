@@ -71,6 +71,7 @@ Scrollable list of available contracts. Each card shows:
 - Client name and type (icon)
 - Contract name and brief description
 - Danger Level (skull icons 1–5 for visual range, plus numeric label)
+- **Uber-Boss warning** (red skull icon + "Apex Predator" label if flagged — shown before accepting)
 - Base fee in Gold
 - Bonus conditions (if applicable)
 - Time limit indicator (if applicable)
