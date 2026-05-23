@@ -132,7 +132,7 @@ Each treasure tile and enemy group has a **loot table** with weighted random rol
 - Rare (12%): good equipment, spell scrolls
 - Legendary (3%): unique named items, story artefacts
 
-Dungeon Danger Level shifts the table weights upward — each 10 levels above 1 shifts 5% from Common to Uncommon and 2% from Uncommon to Rare, up to a floor of 10% Common at Danger Level 50+.
+Dungeon Danger Level shifts the table weights upward — each 10 levels above 1 shifts 5% from Common to Uncommon and 2% from Uncommon to Rare. There is no floor — at very high Danger Levels, Common drops out entirely and even Legendary begins yielding to rarer tiers not on the base table (epic or mythic quality). The shift continues indefinitely as Danger Level rises.
 
 ### Loot Types
 

@@ -57,17 +57,17 @@ Contracts are visible on the **Contract Board**, similar to the Tavern Board. Th
 
 Two separate reputation tracks:
 
-### Street Reputation (0–100)
+### Street Reputation (0–∞)
 How well-known and feared/respected you are in the underworld and adventurer community.  
 - High: higher Danger Level contracts available, criminal and guild clients seek you out
 - Low: ignored by serious clients, scraping for low-value jobs
 
-### Public Reputation (0–100)
+### Public Reputation (0–∞)
 How legitimate you appear to authorities and nobility.  
 - High: city permits cheaper, noble clients available, fewer legal hassles
 - Low: guards may shake you down, certain contracts unavailable, possible crackdowns
 
-### Hero Reputation (0–100)
+### Hero Reputation (0–∞)
 How you are known as an employer among the adventuring community.  
 - High: higher-level candidates and rare classes appear on the Tavern Board; heroes accept slightly lower wages to work for a company with a good name
 - Low: only desperate or low-level candidates show up; skilled heroes avoid you
