@@ -31,16 +31,21 @@ Each tier unlocks:
 ## Hero Progression Tree (per class, example: Fighter)
 
 ```
-Level 1: Base Attack
-Level 2: [Power Strike] or [Shield Wall]
-Level 3: +1 stat point bonus
-Level 4: [Cleave] or [Taunt] or [Endure]
-Level 5: Prestige choice — [Berserker] or [Guardian] (changes combat style)
-...
-Level 10: Veteran ability (passive, permanent)
+Level  1: Base Attack
+Level  2: [Power Strike] or [Shield Wall]
+Level  3: +1 stat point bonus
+Level  4: [Cleave] or [Taunt] or [Endure]
+Level  5: Prestige choice — [Berserker] or [Guardian] (changes combat style)
+Level  7: Secondary trait unlock
+Level 10: Veteran passive (permanent, class-defining benefit)
+Level 20: Master-tier ability
+Level 30: Specialization deepens (third-tier trait)
+Level 50: Legendary passive
+Level 75: Mythic ability
+Level 100: Apex ability (unique per prestige path)
 ```
 
-Max level is 10. A Level 10 hero is extremely valuable, commands a high wage, and is essentially irreplaceable — losing one is a significant setback.
+There is no level cap. XP requirements scale steeply — the gap between levels grows with each tier, so high-level heroes represent years of in-game time and investment. Losing a Level 50+ hero is a catastrophic and essentially irreplaceable loss.
 
 ## Milestones & Unlocks
 
@@ -54,6 +59,9 @@ Certain actions unlock permanent company features:
 | First legendary loot | Black market contact |
 | First hero death | Memorial wall in HQ (morale buff for surviving heroes) |
 | Company Tier 4 | Ability to send two parties simultaneously |
+| First hero reaches Level 20 | Master trainer title — hero can mentor others (passive XP bonus for same-class heroes in roster) |
+| First hero reaches Level 50 | Legendary reputation event — world-wide recognition, special contract tier unlocked |
+| First hero reaches Level 100 | Apex hero status — unique abilities, heroes with Bond to them gain permanent stat bonus |
 
 ## Narrative Events
 

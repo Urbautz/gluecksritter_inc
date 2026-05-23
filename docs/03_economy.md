@@ -87,6 +87,8 @@ You operate from a **base of operations** that can be upgraded:
 | 2 | Warehouse | 60G | 8 heroes | Training dummy, small armoury |
 | 3 | Guild Hall | 150G | 15 heroes | Full training room, clinic, quartermaster |
 | 4 | Fortress | 400G | 30 heroes | Forge, library, dungeon portal (fast travel) |
+| 5 | Grand Citadel | 1000G | 60 heroes | Alchemy lab, war room, arcane vault, recruiting office |
+| 6 | Empire Seat | 2500G | 100 heroes | Legendary vault, faction embassy, arena training ground, master scholar |
 
 **Slots** = maximum heroes on retainer at once.
 

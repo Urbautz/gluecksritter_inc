@@ -5,7 +5,9 @@
       "Bash(git mv *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\micha\\\\OneDrive\\\\Dokumente\\\\GitHub\\\\gluecksritter_inc\" -Recurse -Directory)",
       "Bash(Select-Object -First 30)",
-      "Bash(Format-Table FullName)"
+      "Bash(Format-Table FullName)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\micha\\\\OneDrive\\\\Dokumente\\\\GitHub\\\\gluecksritter_inc\" -Recurse -File)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

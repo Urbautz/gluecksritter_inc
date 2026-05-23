@@ -1,15 +1,80 @@
-<<<<<<< HEAD
-- Company reputation
-- Heros attitude towards company and how it changes 
-- Income: Guard Duty
-- Way more equipment types for Heros
-- The game should be an endless game, so Heros can level up endless, equipment ends upd beeing endlessy better etc.
-- Enemy Types
-Damage types
-=======
 - The game should be an endless game, so Heros can level up endless, equipment ends upd beeing endlessy better etc.
 - Hero races
 - Dungeon Creator Demo
 - Patches Dwarf-Game
 - Page layout and welcome message
->>>>>>> 3017f07fdcb312548c1c52ff764674a05ab7f431
+
+
+
+Scaling Limitations & Suggestions
+4. Company Tier ceiling at 5
+(docs/07_progression.md:14-29)
+
+Once you're Legendary, there's no further company progression track.
+
+Suggestion: Keep Tier 5 as the last named tier, but add internal prestige ranks within it (Legendary I → II → III…). Each rank requires escalating gold + contracts + a unique "story feat" (defeat a named boss, complete a legendary dungeon, etc.). Rewards unlock meta-level mechanics: sending three parties simultaneously, hiring hero trainers, unlocking faction-exclusive missions.
+
+5. Enemy CR caps at 10 with "10+" as undefined
+(docs/05_enemies.md:7-14)
+
+The design only formally defines CR 1–10. Above that, "10+" is a placeholder. Heroes max at 10 dice too, so high-tier late-game becomes a pure numbers arms race with no design intent.
+
+Suggestion: Define CR 11–20 with a new mechanic tier instead of just bigger pools:
+
+CR 11–15 "Elite": 11–15 dice + one passive ability (e.g., regenerate 2 HP/round, immune to one damage type)
+CR 16–20 "Mythic": 16–20 dice + two passives + one active ability (counter-attack, summon adds, shield phase)
+This gives enemies qualitative complexity rather than just more dice, keeping fights interesting against veteran heroes.
+
+MODERATE (creates a plateau, not a stop)
+6. Reputation tracks cap at 100
+(docs/03_economy.md:56-78)
+
+Three tracks, all 0–100. Once maxed, there's no reputation-based tension or reward.
+
+Suggestion: At 100, each track unlocks a Legendary Status tier that is losable. Holding 100 Street Reputation means powerful criminal factions try to co-opt or destroy you; holding 100 Public Reputation attracts noble intrigue. This creates late-game pressure without needing to inflate numbers — the cap becomes a pressure point, not a wall.
+
+7. Carry capacity formula is bounded by stat caps
+(docs/03_economy.md:162-166)
+
+CON + ⌊STR÷2⌋ maxes at 15 AW when both stats are 10. Late-game legendary armor might be heavier or you may want heroes to carry more.
+
+Suggestion: Add an Equipment Mastery trait (available via prestige or specific training) that grants +3 AW carry without changing stats. Also, introduce Masterwork versions of heavy armors that have the same protection but weigh 1 AW less — making late-game equipment upgrades meaningful beyond just "better stats."
+
+8. HP formula hits a ceiling
+(docs/02_heroes.md:87)
+
+CON × 3 + class base — with CON capped at 10, HP tops out (e.g., Fighter: 30 + ~10 base = ~40 HP max). Enemy damage at high CR can easily exceed this, making fights very swingy.
+
+Suggestion: Let prestige ranks grant flat HP bonuses (e.g., +5 HP per prestige rank). This is simpler than changing the formula and keeps CON relevant while allowing late-game survivability to grow.
+
+9. Gold economy has no defined inflation control
+(docs/03_economy.md:16-29)
+
+Tier 5 income dwarfs expenses. There's no defined gold sink for the endgame, so gold becomes meaningless.
+
+Suggestion: Introduce late-game gold sinks that scale with company tier:
+
+Hero retirement funds (pay a hero to retire as a trainer — ongoing weekly salary)
+Political bribes to maintain/restore reputation tracks
+Fortress upgrades (Citadel extensions, armory improvements)
+Legendary equipment commissioning (pay to craft a specific item, long time + high cost)
+10. Loot weight shifts for high-tier dungeons are undefined
+(docs/04_dungeons.md:128-134)
+
+"Dungeon tier shifts weights upward" is stated but not quantified. Without a formula, this can't scale.
+
+Suggestion: Define an explicit formula, e.g.: each dungeon tier above 1 shifts 5% from Common → Uncommon, 2% from Uncommon → Rare. Add a Tier 5+ dungeon category where Legendary drops reach 8–10%, making late-game dungeon selection meaningful.
+
+SUMMARY TABLE
+Limit	Severity	Suggested Solution
+Hero level cap (10)	CRITICAL	Prestige ranks with trait unlocks instead of stat points
+Stat cap (1–10)	CRITICAL	Bonus Dice layer for post-cap growth
+HQ slots cap (30)	CRITICAL	HQ Tier 5 + Branch Offices
+Company tier cap (5)	CRITICAL	Internal prestige ranks within Tier 5
+Enemy CR cap (10+)	CRITICAL	Define CR 11–20 with qualitative mechanics
+Reputation cap (100)	MODERATE	Cap becomes a pressure point with losable Legendary Status
+Carry capacity bound	MODERATE	Equipment Mastery trait + Masterwork items
+HP formula ceiling	MODERATE	Flat HP bonuses per prestige rank
+Gold inflation	MODERATE	Scaling gold sinks per company tier
+Loot weight undefined	MODERATE	Explicit formula per dungeon tier
+The two most interconnected issues are the level cap and stat cap — solving those with the Prestige + Bonus Dice approach gives you a foundation that makes most of the other limits easier to extend naturally.
