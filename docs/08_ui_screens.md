@@ -70,7 +70,7 @@ Board refreshes every 3 in-game days. A "Scout" upgrade (late-game) lets you req
 Scrollable list of available contracts. Each card shows:
 - Client name and type (icon)
 - Contract name and brief description
-- Difficulty tier (skull icons 1–5)
+- Danger Level (skull icons 1–5 for visual range, plus numeric label)
 - Base fee in Gold
 - Bonus conditions (if applicable)
 - Time limit indicator (if applicable)

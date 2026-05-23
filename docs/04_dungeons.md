@@ -39,12 +39,12 @@ Tiles are grouped into **rooms** of varying shapes and sizes. All themes share t
 
 ### Map Sizes
 
-| Size | Grid | Rooms | Typical Difficulty |
+| Size | Grid | Rooms | Typical Danger Level |
 |---|---|---|---|
-| Small | 100×100 | 4–8 | Tier 1–2 |
-| Medium | 200×200 | 10–18 | Tier 2–3 |
-| Large | 300×300 | 18–30 | Tier 3–4 |
-| Mega | 50×500 | 30+ | Tier 4–5 |
+| Small | 100×100 | 4–8 | 1–25 |
+| Medium | 200×200 | 10–18 | 10–50 |
+| Large | 300×300 | 18–30 | 30–75 |
+| Mega | 500×500 | 30+ | 50+ |
 
 ## Dungeon Generator
 
@@ -68,7 +68,7 @@ Each theme uses an algorithm suited to its spatial feel:
 2. Run theme algorithm to carve rooms
 3. Connect rooms (minimum spanning tree + extra loops for interest)
 4. Place Exit at maximum distance from Entry
-5. Populate rooms with encounters scaled to dungeon difficulty tier
+5. Populate rooms with encounters scaled to dungeon Danger Level
 6. Place traps, treasures, hazards according to dungeon theme
 7. Place Boss Lair on the critical path, near Exit
 
@@ -131,7 +131,7 @@ Each treasure tile and enemy group has a **loot table** with weighted random rol
 - Rare (12%): good equipment, spell scrolls
 - Legendary (3%): unique named items, story artefacts
 
-Dungeon tier shifts the table weights upward.
+Dungeon Danger Level shifts the table weights upward — each 10 levels above 1 shifts 5% from Common to Uncommon and 2% from Uncommon to Rare, up to a floor of 10% Common at Danger Level 50+.
 
 ### Loot Types
 

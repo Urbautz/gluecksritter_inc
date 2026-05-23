@@ -10,23 +10,33 @@ The game runs on an **in-game calendar** (days). Time advances when:
 
 Days are proceeded by player choice, he can perform as many actions as he wants during a day.
 
-## Company Progression
+## Company Level
 
-The company advances through **tiers** as net worth and reputation grow:
+The company's level is derived directly from its roster — it is **not set by the player and cannot be directly upgraded**.
 
-| Tier | Name | Unlock |
-|---|---|---|
-| 1 | Street Rabble | Start |
-| 2 | Known Crew | 500G earned lifetime + 3 completed contracts |
-| 3 | Reputable Outfit | 3000G + 10 contracts + HQ Tier 2 |
-| 4 | Established Guild | 15000G + 25 contracts + HQ Tier 3 |
-| 5 | Legendary Company | 75000G + story arc complete |
+> **Company Level = ⌊ average level of all currently hired heroes ⌋**
+> (minimum 1 while at least one hero is on the roster)
 
-Each tier unlocks:
-- Higher-tier contracts on the board
-- Better hero candidates in the tavern
-- New HQ upgrades available
-- New client types
+This makes Company Level a living, self-correcting value. Hire stronger heroes and it rises. Lose heroes to death or dismissal and it drops. There is no cap — as the roster grows in experience, so does the company.
+
+### Effect: Tavern Board
+
+Heroes appearing on the Tavern Board are drawn from a level range centred on the current Company Level:
+
+- **Minimum level shown:** max(1, Company Level − 3)
+- **Maximum level shown:** Company Level + 8
+
+A young company attracts young adventurers. A legendary company becomes a destination for experienced heroes looking for worthy employers.
+
+### Effect: Dungeon Danger Level
+
+Contracts and their dungeons are assigned a **Danger Level** (a number from 1 upward, matching enemy strength and loot value). The contract board draws from a range around the current Company Level:
+
+- **Easy contracts:** Danger Level as low as max(1, Company Level − 20)
+- **Standard contracts:** Danger Level near Company Level
+- **Stretch contracts:** Danger Level up to Company Level + 20
+
+This means the board always offers a mix: safe income, fair fights, and high-risk high-reward outliers. As the company grows more powerful, threats that once seemed impossible become the baseline.
 
 ## Hero Progression Tree (per class, example: Fighter)
 
@@ -47,38 +57,9 @@ Level 100: Apex ability (unique per prestige path)
 
 There is no level cap. XP requirements scale steeply — the gap between levels grows with each tier, so high-level heroes represent years of in-game time and investment. Losing a Level 50+ hero is a catastrophic and essentially irreplaceable loss.
 
-## Milestones & Unlocks
-
-Certain actions unlock permanent company features:
-
-| Milestone | Unlock |
-|---|---|
-| First hero reaches Level 5 | Training room upgrade available |
-| 10 dungeons cleared | Dungeon intel (preview one room before entering) |
-| 5 recurring clients | Client relationship board (track loyalty) |
-| First legendary loot | Black market contact |
-| First hero death | Memorial wall in HQ (morale buff for surviving heroes) |
-| Company Tier 4 | Ability to send two parties simultaneously |
-| First hero reaches Level 20 | Master trainer title — hero can mentor others (passive XP bonus for same-class heroes in roster) |
-| First hero reaches Level 50 | Legendary reputation event — world-wide recognition, special contract tier unlocked |
-| First hero reaches Level 100 | Apex hero status — unique abilities, heroes with Bond to them gain permanent stat bonus |
-
-## Narrative Events
-
-Periodically, **random events** fire that add flavour and choices:
-
-- A retired hero offers to sell you a map to a hidden dungeon
-- A client from a past contract sends a thank-you bonus — or a threat
-- A hero's former enemy shows up and causes a confrontation
-- A rival company poaches one of your heroes (you can counter-offer)
-- A city crackdown targets your type of business — pay a fine or go underground for a week
-- A desperate level-1 hero begs for a job; hiring them is slightly risky, ignoring them has no consequence
-
-Events are resolved with a simple choice (A/B/C) and have mechanical consequences.
-
 ## Endgame
 
-Once the player reaches Company Tier 5, a **legacy mode** becomes available:
+Once the company reaches **Company Level 50**, a **legacy mode** becomes available:
 - Harder contracts, legendary dungeon chains
 - Rival company becomes active antagonist
 - Optional: retire the company at max wealth for a final score

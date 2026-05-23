@@ -7,13 +7,6 @@
 
 
 Scaling Limitations & Suggestions
-4. Company Tier ceiling at 5
-(docs/07_progression.md:14-29)
-
-Once you're Legendary, there's no further company progression track.
-
-Suggestion: Keep Tier 5 as the last named tier, but add internal prestige ranks within it (Legendary I → II → III…). Each rank requires escalating gold + contracts + a unique "story feat" (defeat a named boss, complete a legendary dungeon, etc.). Rewards unlock meta-level mechanics: sending three parties simultaneously, hiring hero trainers, unlocking faction-exclusive missions.
-
 5. Enemy CR caps at 10 with "10+" as undefined
 (docs/05_enemies.md:7-14)
 

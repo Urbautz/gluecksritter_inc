@@ -59,7 +59,7 @@ Two separate reputation tracks:
 
 ### Street Reputation (0–100)
 How well-known and feared/respected you are in the underworld and adventurer community.  
-- High: higher-tier contracts available, criminal and guild clients seek you out
+- High: higher Danger Level contracts available, criminal and guild clients seek you out
 - Low: ignored by serious clients, scraping for low-value jobs
 
 ### Public Reputation (0–100)

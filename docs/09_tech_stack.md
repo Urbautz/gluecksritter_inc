@@ -43,7 +43,7 @@ src/
     classes.ts       — Class definitions, ability trees
     enemies.ts       — Enemy templates and loot tables
     items.ts         — Equipment and item catalogue
-    contracts.ts     — Pre-authored contract templates (Tier 1–3)
+    contracts.ts     — Pre-authored contract templates (Danger Level 1–30)
     events.ts        — Narrative event catalogue
   state/
     gameState.ts     — Central game state object
@@ -56,7 +56,7 @@ index.html
 
 Game state is serialized to JSON and stored in `localStorage` under key `gluecksritter_save`. The save includes:
 
-- Company metadata (name, gold, reputation, tier, date)
+- Company metadata (name, gold, reputation, date) — Company Level is derived from roster, not stored
 - Full hero roster (stats, equipment refs, relationships, XP)
 - Active contracts and runs
 - Inventory / stash
@@ -80,7 +80,7 @@ Dungeons are stored as JSON:
   "rooms": [ { "id": "r1", "type": "chamber", "x": 2, "y": 2, "w": 5, "h": 4 } ],
   "entities": [
     { "type": "enemy", "templateId": "skeleton_warrior", "x": 5, "y": 3 },
-    { "type": "treasure", "tier": 2, "x": 8, "y": 3 }
+    { "type": "treasure", "dangerLevel": 2, "x": 8, "y": 3 }
   ],
   "entry": { "x": 0, "y": 10 },
   "exit": { "x": 19, "y": 10 }
@@ -122,7 +122,7 @@ type RollResult = {
 ```
 
 Pool size for a check = hero stat + equipment dice bonus ± morale modifier.  
-Difficulty is expressed as a **target net** (e.g. a Tier 2 trap requires net ≥ 2 on DEX to disarm cleanly).
+Difficulty is expressed as a **target net** (e.g. a Danger Level 2 trap requires net ≥ 2 on DEX to disarm cleanly).
 
 ## Random Number Generation
 
