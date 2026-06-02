@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Glückritter Inc — Dungeon Creator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: linear-gradient(160deg, #0a0a18 0%, #131328 60%, #0f1020 100%);
+    min-height: 100vh;
+    color: #d8d8ec;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 2.5rem 2rem 3rem;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  header { margin-bottom: 2rem; }
+  h1 {
+    font-size: 1.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #f0c040;
+    text-shadow: 0 0 24px rgba(240,192,64,0.35);
+    margin-bottom: 0.2rem;
+  }
+  p.subtitle { color: #555; font-size: 0.8rem; letter-spacing: 0.05em; }
+
+  /* ── Theme rule box ──────────────────────────────── */
+  .rule-box {
+    background: #0c0c20; border: 1px solid #252545;
+    border-left: 3px solid #f0c040;
+    border-radius: 0 6px 6px 0;
+    padding: 0.85rem 1.2rem; margin-bottom: 1.8rem;
+    font-size: 0.8rem;
+  }
+  .rule-box .theme-name {
+    color: #f0c040; font-weight: bold; font-size: 0.9rem;
+    margin-bottom: 0.35rem; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .rule-row { color: #666; line-height: 1.8; }
+  .rule-row b { color: #a0a0c0; }
+
+  /* ── Controls ────────────────────────────────────── */
+  .controls {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 2rem; align-items: flex-end;
+    background: #0c0c20; border: 1px solid #252545;
+    border-radius: 6px; padding: 0.9rem 1.1rem;
+  }
+  .ctrl-group { display: flex; flex-direction: column; gap: 0.3rem; }
+  label { font-size: 0.72rem; color: #777; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  select, input[type=number] {
+    background: #08081a; border: 1px solid #353560;
+    color: #f0c040; padding: 0.4rem 0.6rem;
+    font-family: inherit; font-size: 0.9rem; border-radius: 4px;
+    outline: none; transition: border-color 0.15s;
+  }
+  select { min-width: 170px; cursor: pointer; }
+  input[type=number] { width: 90px; }
+  select:focus, input[type=number]:focus { border-color: #f0c040; }
+
+  button {
+    background: #f0c040; color: #08081a; border: none;
+    padding: 0.5rem 1.6rem; font-family: inherit; font-size: 0.95rem;
+    font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer; border-radius: 4px;
+    box-shadow: 0 0 12px rgba(240,192,64,0.25);
+    transition: background 0.12s, box-shadow 0.12s;
+  }
+  button:hover { background: #ffd060; box-shadow: 0 0 20px rgba(240,192,64,0.45); }
+  button:active { background: #d4a820; }
+
+  button.secondary {
+    background: transparent; color: #666;
+    border: 1px solid #353560; box-shadow: none;
+    padding: 0.5rem 1rem; font-size: 0.8rem;
+  }
+  button.secondary:hover { background: #13132c; color: #aaa; box-shadow: none; }
+
+  /* ── Main layout ─────────────────────────────────── */
+  .main-area {
+    display: flex; gap: 1.2rem; align-items: flex-start;
+    flex-wrap: wrap; margin-bottom: 1.8rem;
+  }
+
+  /* ── Canvas ──────────────────────────────────────── */
+  .canvas-wrap {
+    background: #07070e;
+    border: 1px solid #252545;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  canvas { display: block; }
+
+  /* ── Stats panel ─────────────────────────────────── */
+  .panel {
+    background: #0c0c20;
+    border: 1px solid #252545;
+    border-top: 3px solid #f0c040;
+    border-radius: 0 0 8px 8px;
+    padding: 1.2rem 1.4rem;
+    min-width: 230px;
+    flex: 1;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .panel h2 {
+    color: #f0c040; font-size: 1.05rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .stat-grid {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 0.2rem 0.8rem; margin-bottom: 0.4rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #1c1c38;
+  }
+  .sl { color: #555; font-size: 0.76rem; align-self: center; }
+  .sv { font-size: 0.82rem; text-align: right; font-weight: bold; color: #d8d8ec; }
+  .sv.gold   { color: #f0c040; }
+  .sv.green  { color: #4caf50; }
+  .sv.red    { color: #ef5350; }
+  .sv.purple { color: #d060f0; }
+  .sv.blue   { color: #6090f0; }
+  .sv.orange { color: #ff8040; }
+
+  .sect {
+    color: #444; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    margin: 1rem 0 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .sect::after { content: ''; flex: 1; height: 1px; background: #1c1c38; }
+
+  /* ── Loot bars ───────────────────────────────────── */
+  .loot-bar { margin: 5px 0; }
+  .loot-label {
+    color: #555; font-size: 0.72rem; margin-bottom: 3px;
+    display: flex; justify-content: space-between;
+  }
+  .loot-label span { color: #888; }
+  .loot-track { height: 10px; background: #080818; border-radius: 3px; overflow: hidden; }
+  .loot-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+  .loot-fill.common   { background: #3a3a5a; }
+  .loot-fill.uncommon { background: #2e5030; }
+  .loot-fill.rare     { background: #1a2e60; }
+  .loot-fill.legendary{ background: linear-gradient(90deg, #5a1a00, #f0c040); }
+
+  /* ── Theme info ──────────────────────────────────── */
+  .theme-info { font-size: 0.75rem; color: #555; line-height: 1.8; }
+  .theme-info b { color: #888; }
+
+  /* ── Legend ──────────────────────────────────────── */
+  .legend {
+    background: #0c0c20; border: 1px solid #252545;
+    border-radius: 6px; padding: 1rem 1.2rem;
+    margin-top: 0;
+  }
+  .legend-section {
+    display: flex; gap: 0.5rem 1.4rem; flex-wrap: wrap;
+    font-size: 0.74rem; margin-bottom: 0.4rem;
+  }
+  .legend-section:last-child { margin-bottom: 0; }
+  .legend-head {
+    color: #444; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem;
+  }
+  .legend-head::after { content: ''; flex: 1; height: 1px; background: #1c1c38; }
+  .leg-item {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    color: #555; min-width: 160px; line-height: 1.3;
+  }
+  .leg-icon {
+    display: flex; align-items: center; justify-content: center; gap: 1px;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .leg-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+  .leg-marker { font-size: 0.7rem; }
+  .leg-text b { color: #888; display: block; }
+  .leg-text span { color: #3a3a5a; font-size: 0.68rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Glückritter Inc — Dungeon Creator</h1>
+  <p class="subtitle">BSP generator · tile map</p>
+</header>
+
+<div class="rule-box" id="themeBox">
+  <div class="theme-name" id="themeTitle">—</div>
+  <div class="rule-row"><b>Enemies:</b> <span id="themeEnemies">—</span></div>
+  <div class="rule-row"><b>Traps:</b> <span id="themeTraps">—</span></div>
+  <div class="rule-row"><b>Loot focus:</b> <span id="themeLoot">—</span></div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Theme</label>
+    <select id="themeSelect" onchange="updateThemeBox()"></select>
+  </div>
+  <div class="ctrl-group">
+    <label>Size</label>
+    <select id="sizeSelect">
+      <option value="small">Small (50 × 38)</option>
+      <option value="medium" selected>Medium (70 × 52)</option>
+      <option value="large">Large (90 × 68)</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Danger Level</label>
+    <input type="number" id="dangerLevel" value="5" min="1" max="100">
+  </div>
+  <div class="ctrl-group">
+    <label>Seed</label>
+    <input type="number" id="seedInput" value="42" min="0" max="9999999">
+  </div>
+  <button onclick="generate()">Generate</button>
+  <button class="secondary" onclick="randomSeed()">Random Seed</button>
+</div>
+
+<div class="main-area">
+  <div class="canvas-wrap">
+    <canvas id="dungeonCanvas"></canvas>
+  </div>
+
+  <div class="panel">
+    <h2>Stats</h2>
+    <div class="stat-grid">
+      <span class="sl">Rooms</span>          <span class="sv"      id="statRooms">—</span>
+      <span class="sl">Enemy spawns</span>   <span class="sv red"   id="statEnemies">—</span>
+      <span class="sl">Boss</span>           <span class="sv purple" id="statBoss">—</span>
+      <span class="sl">Traps</span>          <span class="sv orange" id="statTraps">—</span>
+      <span class="sl">Treasure tiles</span><span class="sv gold"   id="statTreasure">—</span>
+      <span class="sl">Hazards</span>        <span class="sv orange" id="statHazards">—</span>
+      <span class="sl">Doors</span>          <span class="sv"        id="statDoors">—</span>
+      <span class="sl">Floor tiles</span>   <span class="sv"        id="statFloor">—</span>
+    </div>
+
+    <div class="sect">loot table</div>
+
+    <div class="loot-bar">
+      <div class="loot-label">Common <span id="pctCommon">—</span></div>
+      <div class="loot-track"><div class="loot-fill common"    id="barCommon"    style="width:0%"></div></div>
+    </div>
+    <div class="loot-bar">
+      <div class="loot-label">Uncommon <span id="pctUncommon">—</span></div>
+      <div class="loot-track"><div class="loot-fill uncommon"  id="barUncommon"  style="width:0%"></div></div>
+    </div>
+    <div class="loot-bar">
+      <div class="loot-label">Rare <span id="pctRare">—</span></div>
+      <div class="loot-track"><div class="loot-fill rare"      id="barRare"      style="width:0%"></div></div>
+    </div>
+    <div class="loot-bar">
+      <div class="loot-label">Legendary <span id="pctLegendary">—</span></div>
+      <div class="loot-track"><div class="loot-fill legendary" id="barLegendary" style="width:0%"></div></div>
+    </div>
+
+    <div class="sect">theme</div>
+    <div class="theme-info" id="themeInfoPanel">—</div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-head">tiles</div>
+  <div class="legend-section">
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#07070e;border:1px solid #252545"></div></div>
+      <div class="leg-text"><b>Wall</b><span>Impassable</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#1e1e3a"></div></div>
+      <div class="leg-text"><b>Floor</b><span>Passable — tint varies by theme</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#7a4f1a"></div></div>
+      <div class="leg-text"><b>Door</b><span>Lockpick / force / key required</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#4a0000"></div><span class="leg-marker" style="color:#ef5350">×</span></div>
+      <div class="leg-text"><b>Trap</b><span>Hidden — DEX/SMA check to spot</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#3a2e00"></div><span class="leg-marker" style="color:#f0c040">◆</span></div>
+      <div class="leg-text"><b>Treasure</b><span>Contains loot — may be guarded</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#200830"></div><span class="leg-marker" style="color:#ef5350">♦</span></div>
+      <div class="leg-text"><b>Enemy</b><span>Hostile encounter, scales with DL</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#2a0050"></div><span class="leg-marker" style="color:#d060f0">★</span></div>
+      <div class="leg-text"><b>Boss</b><span>Scripted encounter — always on critical path</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#002a00"></div><span class="leg-marker" style="color:#4caf50">▲</span></div>
+      <div class="leg-text"><b>Entry</b><span>Party starts here</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#00002a"></div><span class="leg-marker" style="color:#6090f0">▼</span></div>
+      <div class="leg-text"><b>Exit</b><span>Farthest point from Entry — escape here</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#2a1000"></div><span class="leg-marker" style="color:#ff8040">!</span></div>
+      <div class="leg-text"><b>Hazard</b><span>Environmental danger (pit, acid, collapse)</span></div>
+    </div>
+  </div>
+
+  <div class="legend-head" style="margin-top:0.9rem">room roles</div>
+  <div class="legend-section">
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#4caf50;font-size:0.7rem;width:14px;text-align:center">▲</div>
+      <div class="leg-text"><b>Entry</b><span>Starting room — leftmost by placement</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#6090f0;font-size:0.7rem;width:14px;text-align:center">▼</div>
+      <div class="leg-text"><b>Exit</b><span>Goal — farthest room from Entry</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#d060f0;font-size:0.7rem;width:14px;text-align:center">★</div>
+      <div class="leg-text"><b>Boss (BOSS)</b><span>Near Exit — guarded boss encounter</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#f0c040;font-size:0.65rem;width:14px;text-align:center">◆</div>
+      <div class="leg-text"><b>Vault (VAULT)</b><span>Dense treasure tiles — high loot room</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#ef5350;font-size:0.7rem;width:14px;text-align:center">♦</div>
+      <div class="leg-text"><b>Barracks (BRCKS)</b><span>Dense enemy spawns</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#555;font-size:0.65rem;width:14px;text-align:center">·</div>
+      <div class="leg-text"><b>Chamber</b><span>Open space — light encounters, tactical options</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#ff8040;font-size:0.7rem;width:14px;text-align:center">!</div>
+      <div class="leg-text"><b>Passage (PASS)</b><span>Narrow connector — trap &amp; hazard risk</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tile type constants ───────────────────────────────────────
+const T = {
+  WALL:0, FLOOR:1, DOOR:2, TRAP:3, TREASURE:4,
+  ENEMY:5, BOSS:6, ENTRY:7, EXIT:8, HAZARD:9
+};
+
+// ── Theme definitions ─────────────────────────────────────────
+const THEMES = [
+  { id:'crypt',    name:'Crypt',             floor:'#1a1428', enemies:'Undead, cultists',       traps:'Poison darts, cursed tiles',        loot:'Jewellery, relics',              hasTrap:true  },
+  { id:'bandit',   name:'Bandit Den',        floor:'#1c160e', enemies:'Humanoids, rogues',      traps:'Alarm tripwires, pit traps',        loot:'Coin, stolen goods',             hasTrap:true  },
+  { id:'beast',    name:'Beast Lair',        floor:'#0e1a0e', enemies:'Animals, monsters',      traps:'None (raw danger)',                 loot:'Pelts, monster parts',           hasTrap:false },
+  { id:'ruins',    name:'Ruins',             floor:'#181818', enemies:'Constructs, spirits',    traps:'Collapsing floors',                 loot:'Ancient artefacts',              hasTrap:true  },
+  { id:'sewer',    name:'Sewer',             floor:'#0d1a0e', enemies:'Rats, thieves guild',    traps:'Acid pools, flooding',              loot:'Keys, documents',                hasTrap:true  },
+  { id:'dragon',   name:'Dragon Hoard',      floor:'#1c1000', enemies:'Drakes, dragonkin',      traps:'Fire vents, magical wards',         loot:'Gold, legendary weapons',        hasTrap:true  },
+  { id:'forest',   name:'Forest',            floor:'#0a1a0a', enemies:'Druids, fey, beasts',   traps:'Snares, pitfalls, poisoned thorns', loot:'Herbs, fey tokens, rare pelts',  hasTrap:true  },
+  { id:'prison',   name:'Prison',            floor:'#141414', enemies:'Guards, prisoners',      traps:'Barred doors, alarm bells',         loot:'Weapons, confiscated gear',      hasTrap:true  },
+  { id:'fortress', name:'Fortress',          floor:'#101018', enemies:'Soldiers, knights',      traps:'Arrow slits, portcullises',         loot:'Military gear, war chest',       hasTrap:true  },
+  { id:'village',  name:'Abandoned Village', floor:'#141210', enemies:'Bandits, cultists',      traps:'Hidden cellars, cursed objects',    loot:'Household valuables, coin',      hasTrap:true  },
+];
+
+// ── Map size presets ──────────────────────────────────────────
+const SIZES = {
+  small:  { w:50, h:38, px:14 },
+  medium: { w:70, h:52, px:12 },
+  large:  { w:90, h:68, px:10 },
+};
+
+// ── Tile colors & markers ─────────────────────────────────────
+const TILE_BG = {
+  [T.WALL]:     '#07070e',
+  [T.FLOOR]:    '#1e1e3a',  // overridden per theme
+  [T.DOOR]:     '#7a4f1a',
+  [T.TRAP]:     '#4a0000',
+  [T.TREASURE]: '#3a2e00',
+  [T.ENEMY]:    '#200830',
+  [T.BOSS]:     '#2a0050',
+  [T.ENTRY]:    '#002a00',
+  [T.EXIT]:     '#00002a',
+  [T.HAZARD]:   '#2a1000',
+};
+
+const TILE_MARK = {
+  [T.TRAP]:     { ch:'×', col:'#ef5350' },
+  [T.TREASURE]: { ch:'◆', col:'#f0c040' },
+  [T.ENEMY]:    { ch:'♦', col:'#ef5350' },
+  [T.BOSS]:     { ch:'★', col:'#d060f0' },
+  [T.ENTRY]:    { ch:'▲', col:'#4caf50' },
+  [T.EXIT]:     { ch:'▼', col:'#6090f0' },
+  [T.HAZARD]:   { ch:'!', col:'#ff8040' },
+};
+
+// ── Seeded PRNG (Mulberry32) ──────────────────────────────────
+function makePRNG(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ── BSP Dungeon Generator ─────────────────────────────────────
+function generateDungeon(W, H, theme, rng) {
+  const grid  = new Uint8Array(W * H);  // all zeros = WALL
+  const rooms = [];
+
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  function carveRect(x, y, w, h) {
+    for (let dy = 0; dy < h; dy++)
+      for (let dx = 0; dx < w; dx++)
+        gset(x + dx, y + dy, T.FLOOR);
+  }
+
+  function carveLine(x0, y0, x1, y1) {
+    let x = x0, y = y0;
+    while (x !== x1) { gset(x, y, T.FLOOR); x += x < x1 ? 1 : -1; }
+    while (y !== y1) { gset(x, y, T.FLOOR); y += y < y1 ? 1 : -1; }
+    gset(x1, y1, T.FLOOR);
+  }
+
+  const MIN_LEAF = 10;
+  const MIN_PAD  = 1;
+
+  function bsp(x, y, w, h, depth) {
+    const canSplitH = w >= MIN_LEAF * 2;
+    const canSplitV = h >= MIN_LEAF * 2;
+
+    if (depth === 0 || (!canSplitH && !canSplitV)) {
+      // Leaf: carve a room with padding
+      const pad = MIN_PAD + Math.floor(rng() * 2);
+      const rx  = x + pad;
+      const ry  = y + pad;
+      const rw  = Math.max(4, w - pad * 2 - Math.floor(rng() * 3));
+      const rh  = Math.max(4, h - pad * 2 - Math.floor(rng() * 3));
+      if (rx + rw >= W || ry + rh >= H) return null;
+      carveRect(rx, ry, rw, rh);
+      const room = {
+        x: rx, y: ry, w: rw, h: rh,
+        cx: rx + Math.floor(rw / 2),
+        cy: ry + Math.floor(rh / 2),
+        role: 'chamber'
+      };
+      rooms.push(room);
+      return room;
+    }
+
+    // Prefer to split along the longer axis; bias with some randomness
+    const splitH = canSplitH && (!canSplitV || rng() < (w > h ? 0.65 : 0.35));
+
+    let roomA, roomB;
+
+    if (splitH) {
+      const lo = x + MIN_LEAF;
+      const hi = x + w - MIN_LEAF;
+      if (lo >= hi) return bsp(x, y, w, h, 0);
+      const cut = lo + Math.floor(rng() * (hi - lo));
+      roomA = bsp(x,   y, cut - x,     h, depth - 1);
+      roomB = bsp(cut, y, x + w - cut, h, depth - 1);
+    } else {
+      const lo = y + MIN_LEAF;
+      const hi = y + h - MIN_LEAF;
+      if (lo >= hi) return bsp(x, y, w, h, 0);
+      const cut = lo + Math.floor(rng() * (hi - lo));
+      roomA = bsp(x, y,   w, cut - y,     depth - 1);
+      roomB = bsp(x, cut, w, y + h - cut, depth - 1);
+    }
+
+    // Connect children with an L-shaped corridor
+    if (roomA && roomB) {
+      if (rng() < 0.5) {
+        carveLine(roomA.cx, roomA.cy, roomB.cx, roomA.cy);
+        carveLine(roomB.cx, roomA.cy, roomB.cx, roomB.cy);
+      } else {
+        carveLine(roomA.cx, roomA.cy, roomA.cx, roomB.cy);
+        carveLine(roomA.cx, roomB.cy, roomB.cx, roomB.cy);
+      }
+    }
+
+    return roomA || roomB;
+  }
+
+  // Choose BSP depth based on map size
+  const depth = W > 75 ? 5 : W > 55 ? 4 : 3;
+  bsp(1, 1, W - 2, H - 2, depth);
+
+  if (rooms.length === 0) return { grid, rooms };
+
+  // ── Place Entry (leftmost room) ───────────────────────────
+  rooms.sort((a, b) => a.cx - b.cx);
+  const entryRoom = rooms[0];
+
+  // ── Place Exit (farthest from Entry by Manhattan distance) ─
+  let exitRoom = rooms[rooms.length - 1];
+  let maxDist  = 0;
+  for (const r of rooms) {
+    const d = Math.abs(r.cx - entryRoom.cx) + Math.abs(r.cy - entryRoom.cy);
+    if (d > maxDist) { maxDist = d; exitRoom = r; }
+  }
+
+  // ── Boss room (nearest to Exit, not Exit itself) ───────────
+  let bossRoom = null;
+  let minDist  = Infinity;
+  for (const r of rooms) {
+    if (r === exitRoom) continue;
+    const d = Math.abs(r.cx - exitRoom.cx) + Math.abs(r.cy - exitRoom.cy);
+    if (d < minDist) { minDist = d; bossRoom = r; }
+  }
+
+  // ── Assign room roles ─────────────────────────────────────
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.w * r.h <= 20) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  // ── Fixed anchor tiles ────────────────────────────────────
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Helpers ───────────────────────────────────────────────
+  // Collect floor tiles currently inside a room rectangle.
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+
+  // Place a single tile on a random floor spot in a room.
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+
+  // Place `count` tiles in a tight cluster anchored at a random floor tile.
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    // Sort by Manhattan distance from anchor, then take the closest `count`
+    f.sort((a, b) =>
+      (Math.abs(a[0]-ax) + Math.abs(a[1]-ay)) -
+      (Math.abs(b[0]-ax) + Math.abs(b[1]-ay))
+    );
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+
+  // Fisher-Yates shuffle using seeded rng.
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Boss guards: cluster tightly around the boss tile ────
+  const guardCount = 2 + Math.floor(rng() * 3); // 2–4
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  // ── Enemy groups: 3–5 groups, each 2–10 enemies, spread ─
+  const eligible = shuffle(
+    rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom)
+  );
+  const numGroups = 3 + Math.floor(rng() * 3); // 3–5
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++) {
+    const groupSize = 2 + Math.floor(rng() * 9); // 2–10
+    placeCluster(eligible[g], T.ENEMY, groupSize);
+  }
+
+  // ── Treasure: 1–2 in vault rooms, 0–1 elsewhere (~35%) ──
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE); // 60% chance of a second
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  // ── Traps: 1–2 in passages, 0–1 elsewhere (~20%) ────────
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.4) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.20) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  // ── Doors: one per chamber room ──────────────────────────
+  for (const r of rooms) {
+    if (r.role !== 'chamber') continue;
+    if (rng() < 0.45) {
+      const tx = r.x + Math.floor(rng() * r.w);
+      if (tx > 0 && tx < W-1 && gget(tx, r.y) === T.FLOOR)
+        gset(tx, r.y, T.DOOR);
+    }
+  }
+
+  return { grid, rooms };
+}
+
+// ── Canvas renderer ───────────────────────────────────────────
+function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
+  canvas.width  = W * px;
+  canvas.height = H * px;
+  const ctx = canvas.getContext('2d');
+  const fontSize = Math.max(6, px - 3);
+
+  ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t  = grid[y * W + x];
+      const bx = x * px;
+      const by = y * px;
+
+      ctx.fillStyle = (t === T.FLOOR) ? theme.floor : TILE_BG[t];
+      ctx.fillRect(bx, by, px, px);
+
+      const mk = TILE_MARK[t];
+      if (mk && px >= 8) {
+        ctx.fillStyle = mk.col;
+        ctx.fillText(mk.ch, bx + px * 0.5, by + px * 0.5);
+      }
+    }
+  }
+
+  // Room-role labels on larger rooms
+  if (px >= 12) {
+    const labelMap = { entry:'ENTRY', exit:'EXIT', boss:'BOSS',
+                       vault:'VAULT', barracks:'BRCKS', passage:'PASS' };
+    ctx.font = `${Math.max(7, px - 6)}px 'Courier New', monospace`;
+    for (const r of rooms) {
+      if (r.w * r.h < 25) continue;
+      const lbl = labelMap[r.role];
+      if (!lbl) continue;
+      const alpha = (r.role === 'boss' || r.role === 'entry' || r.role === 'exit') ? 0.9 : 0.35;
+      ctx.fillStyle = `rgba(240,192,64,${alpha})`;
+      ctx.fillText(lbl, r.cx * px + px * 0.5, (r.cy + 1) * px + px * 0.5);
+    }
+  }
+}
+
+// ── Loot table calculator ─────────────────────────────────────
+function lootTable(dl) {
+  const shifts  = Math.floor(Math.max(0, dl - 1) / 10);
+  let common    = Math.max(0,  60 - shifts * 5);
+  let uncommon  = Math.min(50, 25 + shifts * 3);
+  let rare      = Math.min(35, 12 + shifts * 2);
+  let legendary = Math.max(0, 100 - common - uncommon - rare);
+  const total   = common + uncommon + rare + legendary;
+  return {
+    common:    Math.round(common    / total * 100),
+    uncommon:  Math.round(uncommon  / total * 100),
+    rare:      Math.round(rare      / total * 100),
+    legendary: Math.round(legendary / total * 100),
+  };
+}
+
+// ── UI helpers ────────────────────────────────────────────────
+function getTheme() {
+  const id = document.getElementById('themeSelect').value;
+  return THEMES.find(t => t.id === id) || THEMES[0];
+}
+
+function updateThemeBox() {
+  const th = getTheme();
+  document.getElementById('themeTitle').textContent    = th.name;
+  document.getElementById('themeEnemies').textContent  = th.enemies;
+  document.getElementById('themeTraps').textContent    = th.traps;
+  document.getElementById('themeLoot').textContent     = th.loot;
+}
+
+function updateLootDisplay(dl) {
+  const lt  = lootTable(dl);
+  const max = Math.max(lt.common, lt.uncommon, lt.rare, lt.legendary, 1);
+
+  document.getElementById('pctCommon').textContent    = lt.common    + '%';
+  document.getElementById('pctUncommon').textContent  = lt.uncommon  + '%';
+  document.getElementById('pctRare').textContent      = lt.rare      + '%';
+  document.getElementById('pctLegendary').textContent = lt.legendary + '%';
+
+  document.getElementById('barCommon').style.width    = (lt.common    / max * 100) + '%';
+  document.getElementById('barUncommon').style.width  = (lt.uncommon  / max * 100) + '%';
+  document.getElementById('barRare').style.width      = (lt.rare      / max * 100) + '%';
+  document.getElementById('barLegendary').style.width = (lt.legendary / max * 100) + '%';
+}
+
+function randomSeed() {
+  document.getElementById('seedInput').value = Math.floor(Math.random() * 9999999);
+  generate();
+}
+
+// ── Main generate ─────────────────────────────────────────────
+function generate() {
+  const theme   = getTheme();
+  const sizeKey = document.getElementById('sizeSelect').value;
+  const { w: W, h: H, px } = SIZES[sizeKey];
+  const dl   = Math.max(1, parseInt(document.getElementById('dangerLevel').value)  || 5);
+  const seed = Math.max(0, parseInt(document.getElementById('seedInput').value) || 42);
+  const rng  = makePRNG(seed);
+
+  const { grid, rooms } = generateDungeon(W, H, theme, rng);
+  const canvas = document.getElementById('dungeonCanvas');
+  renderDungeon(canvas, grid, rooms, W, H, px, theme);
+
+  // Count tiles
+  const counts = {};
+  for (const t of grid) counts[t] = (counts[t] || 0) + 1;
+
+  document.getElementById('statRooms').textContent    = rooms.length;
+  document.getElementById('statEnemies').textContent  = counts[T.ENEMY]    || 0;
+  document.getElementById('statBoss').textContent     = counts[T.BOSS]     ? 'present' : 'none';
+  document.getElementById('statTraps').textContent    = counts[T.TRAP]     || 0;
+  document.getElementById('statTreasure').textContent = counts[T.TREASURE] || 0;
+  document.getElementById('statHazards').textContent  = counts[T.HAZARD]   || 0;
+  document.getElementById('statDoors').textContent    = counts[T.DOOR]     || 0;
+  document.getElementById('statFloor').textContent    = (counts[T.FLOOR]   || 0).toLocaleString();
+
+  updateLootDisplay(dl);
+
+  document.getElementById('themeInfoPanel').innerHTML =
+    `<b>Enemies:</b> ${theme.enemies}<br>` +
+    `<b>Traps:</b> ${theme.traps}<br>` +
+    `<b>Loot:</b> ${theme.loot}`;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+(function init() {
+  const sel = document.getElementById('themeSelect');
+  for (const t of THEMES) {
+    const opt = document.createElement('option');
+    opt.value       = t.id;
+    opt.textContent = t.name;
+    sel.appendChild(opt);
+  }
+  updateThemeBox();
+  generate();
+}());
+</script>
+</body>
+</html>
