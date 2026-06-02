@@ -202,9 +202,9 @@
   <div class="ctrl-group">
     <label>Size</label>
     <select id="sizeSelect">
-      <option value="small">Small (50 × 38)</option>
-      <option value="medium" selected>Medium (70 × 52)</option>
-      <option value="large">Large (90 × 68)</option>
+      <option value="small">Small  (4 500 – 6 500 tiles)</option>
+      <option value="medium" selected>Medium (6 500 – 9 000 tiles)</option>
+      <option value="large">Large  (9 000 – 15 000 tiles)</option>
     </select>
   </div>
   <div class="ctrl-group">
@@ -227,6 +227,7 @@
   <div class="panel">
     <h2>Stats</h2>
     <div class="stat-grid">
+      <span class="sl">Grid</span>           <span class="sv"      id="statGrid">—</span>
       <span class="sl">Rooms</span>          <span class="sv"      id="statRooms">—</span>
       <span class="sl">Enemy spawns</span>   <span class="sv red"   id="statEnemies">—</span>
       <span class="sl">Boss</span>           <span class="sv purple" id="statBoss">—</span>
@@ -360,12 +361,27 @@ const THEMES = [
   { id:'village',  name:'Abandoned Village', floor:'#141210', enemies:'Bandits, cultists',      traps:'Hidden cellars, cursed objects',    loot:'Household valuables, coin',      hasTrap:true  },
 ];
 
-// ── Map size presets ──────────────────────────────────────────
-const SIZES = {
-  small:  { w:50, h:38, px:14 },
-  medium: { w:70, h:52, px:12 },
-  large:  { w:90, h:68, px:10 },
+// ── Map size tile-count ranges ────────────────────────────────
+const SIZE_RANGES = {
+  small:  [4500,  6500],
+  medium: [6500,  9000],
+  large:  [9000, 15000],
 };
+
+// Pick W, H, px and BSP depth from size category + seeded rng.
+// Aspect ratio is random 1:1 – 2.5:1, orientation random.
+function pickDimensions(sizeKey, rng) {
+  const [lo, hi] = SIZE_RANGES[sizeKey];
+  const T         = lo + Math.floor(rng() * (hi - lo));   // total tiles
+  const ratio     = 1.0 + rng() * 1.5;                    // 1.0 – 2.5
+  const landscape = rng() < 0.5;
+  const r         = landscape ? ratio : 1 / ratio;         // r = W/H
+  const W  = Math.max(20, Math.round(Math.sqrt(T * r)));
+  const H  = Math.max(20, Math.round(Math.sqrt(T / r)));
+  const px = Math.max(5, Math.min(12, Math.floor(1100 / W), Math.floor(750 / H)));
+  const depth = T > 7500 ? 6 : 5;
+  return { W, H, px, depth };
+}
 
 // ── Tile colors & markers ─────────────────────────────────────
 const TILE_BG = {
@@ -403,7 +419,7 @@ function makePRNG(seed) {
 }
 
 // ── BSP Dungeon Generator ─────────────────────────────────────
-function generateDungeon(W, H, theme, rng) {
+function generateDungeon(W, H, theme, rng, depth) {
   const grid  = new Uint8Array(W * H);  // all zeros = WALL
   const rooms = [];
 
@@ -416,11 +432,29 @@ function generateDungeon(W, H, theme, rng) {
         gset(x + dx, y + dy, T.FLOOR);
   }
 
-  function carveLine(x0, y0, x1, y1) {
-    let x = x0, y = y0;
-    while (x !== x1) { gset(x, y, T.FLOOR); x += x < x1 ? 1 : -1; }
-    while (y !== y1) { gset(x, y, T.FLOOR); y += y < y1 ? 1 : -1; }
-    gset(x1, y1, T.FLOOR);
+  // 2-tile-wide L-shaped corridor; yo/xo pick which side expands
+  function carveWide(x0, y0, x1, y1) {
+    const hFirst = rng() < 0.5;
+    const yo = rng() < 0.5 ? 1 : -1;
+    const xo = rng() < 0.5 ? 1 : -1;
+    function hSeg(fx, tx, ay) {
+      const s = fx <= tx ? 1 : -1;
+      for (let x = fx; x !== tx + s; x += s) {
+        gset(x, ay, T.FLOOR);
+        const ny = ay + yo;
+        if (ny > 0 && ny < H - 1) gset(x, ny, T.FLOOR);
+      }
+    }
+    function vSeg(ax, fy, ty) {
+      const s = fy <= ty ? 1 : -1;
+      for (let y = fy; y !== ty + s; y += s) {
+        gset(ax, y, T.FLOOR);
+        const nx = ax + xo;
+        if (nx > 0 && nx < W - 1) gset(nx, y, T.FLOOR);
+      }
+    }
+    if (hFirst) { hSeg(x0, x1, y0); vSeg(x1, y0, y1); }
+    else        { vSeg(x0, y0, y1); hSeg(x0, x1, y1); }
   }
 
   const MIN_LEAF = 10;
@@ -470,22 +504,12 @@ function generateDungeon(W, H, theme, rng) {
       roomB = bsp(x, cut, w, y + h - cut, depth - 1);
     }
 
-    // Connect children with an L-shaped corridor
-    if (roomA && roomB) {
-      if (rng() < 0.5) {
-        carveLine(roomA.cx, roomA.cy, roomB.cx, roomA.cy);
-        carveLine(roomB.cx, roomA.cy, roomB.cx, roomB.cy);
-      } else {
-        carveLine(roomA.cx, roomA.cy, roomA.cx, roomB.cy);
-        carveLine(roomA.cx, roomB.cy, roomB.cx, roomB.cy);
-      }
-    }
+    // Connect children with a wide L-shaped corridor
+    if (roomA && roomB) carveWide(roomA.cx, roomA.cy, roomB.cx, roomB.cy);
 
     return roomA || roomB;
   }
 
-  // Choose BSP depth based on map size
-  const depth = W > 75 ? 5 : W > 55 ? 4 : 3;
   bsp(1, 1, W - 2, H - 2, depth);
 
   if (rooms.length === 0) return { grid, rooms };
@@ -510,6 +534,24 @@ function generateDungeon(W, H, theme, rng) {
     const d = Math.abs(r.cx - exitRoom.cx) + Math.abs(r.cy - exitRoom.cy);
     if (d < minDist) { minDist = d; bossRoom = r; }
   }
+
+  // ── Extra corridors: multiple paths to boss ──────────────
+  // Connect the 2–3 nearest rooms to boss with direct corridors
+  const nearBoss = rooms
+    .filter(r => r !== bossRoom)
+    .sort((a, b) =>
+      (Math.abs(a.cx - bossRoom.cx) + Math.abs(a.cy - bossRoom.cy)) -
+      (Math.abs(b.cx - bossRoom.cx) + Math.abs(b.cy - bossRoom.cy))
+    );
+  const extraBossPaths = 2 + Math.floor(rng() * 2);  // 2–3
+  for (let i = 0; i < Math.min(extraBossPaths, nearBoss.length); i++)
+    carveWide(nearBoss[i].cx, nearBoss[i].cy, bossRoom.cx, bossRoom.cy);
+
+  // ── Extra random corridors for general loopiness ──────────
+  const loopCount = 2 + Math.floor(rng() * 3);
+  const rshuf = shuffle([...rooms]);
+  for (let i = 0; i < Math.min(loopCount, rshuf.length - 1); i++)
+    carveWide(rshuf[i].cx, rshuf[i].cy, rshuf[i + 1].cx, rshuf[i + 1].cy);
 
   // ── Assign room roles ─────────────────────────────────────
   for (const r of rooms) {
@@ -610,20 +652,46 @@ function generateDungeon(W, H, theme, rng) {
       if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
       if (r.role === 'passage') {
         placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
-        if (rng() < 0.4) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
-      } else if (rng() < 0.20) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
         placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
       }
     }
   }
 
-  // ── Doors: one per chamber room ──────────────────────────
+  // ── Doors: place only where corridor entrance is exactly 2 tiles wide ───
+  const isInAnyRoom = (x, y) =>
+    rooms.some(rm => x >= rm.x && x < rm.x + rm.w && y >= rm.y && y < rm.y + rm.h);
+
+  const isCorridor = (x, y) => x > 0 && x < W-1 && y > 0 && y < H-1
+                             && gget(x, y) === T.FLOOR && !isInAnyRoom(x, y);
+
+  // Scan a list of coords, return pairs from runs of exactly-2 consecutive corridor tiles
+  const exactTwo = coords => {
+    const out = []; let run = [];
+    for (const c of coords) {
+      if (isCorridor(c[0], c[1])) { run.push(c); }
+      else { if (run.length === 2) out.push([run[0], run[1]]); run = []; }
+    }
+    if (run.length === 2) out.push([run[0], run[1]]);
+    return out;
+  };
+
   for (const r of rooms) {
     if (r.role !== 'chamber') continue;
-    if (rng() < 0.45) {
-      const tx = r.x + Math.floor(rng() * r.w);
-      if (tx > 0 && tx < W-1 && gget(tx, r.y) === T.FLOOR)
-        gset(tx, r.y, T.DOOR);
+    if (rng() >= 0.45) continue;
+
+    const pairs = [];
+    if (r.y > 0)     pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y-1])));
+    if (r.y+r.h < H) pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y+r.h])));
+    if (r.x > 0)     pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x-1, r.y+i])));
+    if (r.x+r.w < W) pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x+r.w, r.y+i])));
+
+    if (pairs.length > 0) {
+      const p = pairs[Math.floor(rng() * pairs.length)];
+      gset(p[0][0], p[0][1], T.DOOR);
+      gset(p[1][0], p[1][1], T.DOOR);
     }
   }
 
@@ -651,7 +719,7 @@ function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
       ctx.fillRect(bx, by, px, px);
 
       const mk = TILE_MARK[t];
-      if (mk && px >= 8) {
+      if (mk) {
         ctx.fillStyle = mk.col;
         ctx.fillText(mk.ch, bx + px * 0.5, by + px * 0.5);
       }
@@ -728,12 +796,12 @@ function randomSeed() {
 function generate() {
   const theme   = getTheme();
   const sizeKey = document.getElementById('sizeSelect').value;
-  const { w: W, h: H, px } = SIZES[sizeKey];
   const dl   = Math.max(1, parseInt(document.getElementById('dangerLevel').value)  || 5);
   const seed = Math.max(0, parseInt(document.getElementById('seedInput').value) || 42);
   const rng  = makePRNG(seed);
 
-  const { grid, rooms } = generateDungeon(W, H, theme, rng);
+  const { W, H, px, depth } = pickDimensions(sizeKey, rng);
+  const { grid, rooms } = generateDungeon(W, H, theme, rng, depth);
   const canvas = document.getElementById('dungeonCanvas');
   renderDungeon(canvas, grid, rooms, W, H, px, theme);
 
@@ -741,6 +809,7 @@ function generate() {
   const counts = {};
   for (const t of grid) counts[t] = (counts[t] || 0) + 1;
 
+  document.getElementById('statGrid').textContent     = `${W} × ${H}`;
   document.getElementById('statRooms').textContent    = rooms.length;
   document.getElementById('statEnemies').textContent  = counts[T.ENEMY]    || 0;
   document.getElementById('statBoss').textContent     = counts[T.BOSS]     ? 'present' : 'none';
