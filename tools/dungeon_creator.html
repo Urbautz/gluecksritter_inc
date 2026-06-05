@@ -184,7 +184,7 @@
 
 <header>
   <h1>Glückritter Inc — Dungeon Creator</h1>
-  <p class="subtitle">BSP · Drunk-walk + CA · Grid Tunnel · Hub &amp; Spoke · tile map</p>
+  <p class="subtitle">BSP · Drunk-walk + CA · Grid Tunnel · Hub &amp; Spoke · Scatter · tile map</p>
 </header>
 
 <div class="rule-box" id="themeBox">
@@ -1411,6 +1411,300 @@ function generateDungeonHubSpoke(W, H, theme, rng) {
   return { grid, rooms };
 }
 
+function generateDungeonScatter(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { if (x >= 0 && x < W && y >= 0 && y < H) grid[y * W + x] = t; }
+  function gget(x, y)    { return (x >= 0 && x < W && y >= 0 && y < H) ? grid[y * W + x] : T.WALL; }
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  const rooms = [];
+
+  // Reject building if it overlaps any already-placed room (1-tile margin)
+  function overlaps(bx, by, bw, bh) {
+    return rooms.some(r =>
+      bx < r.x + r.w + 1 && bx + bw + 1 > r.x &&
+      by < r.y + r.h + 1 && by + bh + 1 > r.y
+    );
+  }
+
+  function carveRect(bx, by, bw, bh) {
+    for (let dy = 0; dy < bh; dy++)
+      for (let dx = 0; dx < bw; dx++)
+        gset(bx + dx, by + dy, T.FLOOR);
+    return { x: bx, y: by, w: bw, h: bh,
+             cx: bx + Math.floor(bw / 2), cy: by + Math.floor(bh / 2), role: 'chamber' };
+  }
+
+  function streetH(x1, x2, y) {
+    const s = x1 <= x2 ? 1 : -1;
+    for (let x = x1; x !== x2 + s; x += s) {
+      if (x > 0 && x < W-1 && y   > 0 && y   < H-1) gset(x, y,   T.FLOOR);
+      if (x > 0 && x < W-1 && y+1 > 0 && y+1 < H-1) gset(x, y+1, T.FLOOR);
+    }
+  }
+  function streetV(y1, y2, x) {
+    const s = y1 <= y2 ? 1 : -1;
+    for (let y = y1; y !== y2 + s; y += s) {
+      if (x   > 0 && x   < W-1 && y > 0 && y < H-1) gset(x,   y, T.FLOOR);
+      if (x+1 > 0 && x+1 < W-1 && y > 0 && y < H-1) gset(x+1, y, T.FLOOR);
+    }
+  }
+  function alleyH(x1, x2, y) {
+    if (y <= 0 || y >= H-1) return;
+    const s = x1 <= x2 ? 1 : -1;
+    for (let x = x1; x !== x2 + s; x += s)
+      if (x > 0 && x < W-1) gset(x, y, T.FLOOR);
+  }
+  function alleyV(y1, y2, x) {
+    if (x <= 0 || x >= W-1) return;
+    const s = y1 <= y2 ? 1 : -1;
+    for (let y = y1; y !== y2 + s; y += s)
+      if (y > 0 && y < H-1) gset(x, y, T.FLOOR);
+  }
+
+  // Try to place a building adjacent to a horizontal street (streetY = top row).
+  // side +1 = below, -1 = above. Returns room or null if it doesn't fit.
+  function placeAlongH(streetY, side, houseX, bw, bh, withDoor) {
+    let houseY = side === 1 ? streetY + 3 : streetY - bh - 2;
+    houseY = Math.max(1, Math.min(H - bh - 2, houseY));
+    houseX = Math.max(1, Math.min(W - bw - 2, houseX));
+    if (side ===  1 && houseY <= streetY + 1) return null;
+    if (side === -1 && houseY + bh >= streetY) return null;
+    if (houseX + bw >= W - 1 || houseY + bh >= H - 1) return null;
+    if (overlaps(houseX, houseY, bw, bh)) return null;
+    const r = carveRect(houseX, houseY, bw, bh);
+    rooms.push(r);
+    const ax = houseX + Math.floor(bw / 2);
+    if (side === 1) {
+      alleyV(streetY + 2, houseY - 1, ax);
+      if (withDoor && rng() < 0.55) gset(ax, houseY, T.DOOR);
+    } else {
+      alleyV(houseY + bh, streetY - 1, ax);
+      if (withDoor && rng() < 0.55) gset(ax, houseY + bh - 1, T.DOOR);
+    }
+    return r;
+  }
+
+  // Same for a vertical street (streetX = left column). side +1 = right, -1 = left.
+  function placeAlongV(streetX, side, houseY, bw, bh, withDoor) {
+    let houseX = side === 1 ? streetX + 3 : streetX - bw - 2;
+    houseX = Math.max(1, Math.min(W - bw - 2, houseX));
+    houseY = Math.max(1, Math.min(H - bh - 2, houseY));
+    if (side ===  1 && houseX <= streetX + 1) return null;
+    if (side === -1 && houseX + bw >= streetX) return null;
+    if (houseX + bw >= W - 1 || houseY + bh >= H - 1) return null;
+    if (overlaps(houseX, houseY, bw, bh)) return null;
+    const r = carveRect(houseX, houseY, bw, bh);
+    rooms.push(r);
+    const ay = houseY + Math.floor(bh / 2);
+    if (side === 1) {
+      alleyH(streetX + 2, houseX - 1, ay);
+      if (withDoor && rng() < 0.55) gset(houseX, ay, T.DOOR);
+    } else {
+      alleyH(houseX + bw, streetX - 1, ay);
+      if (withDoor && rng() < 0.55) gset(houseX + bw - 1, ay, T.DOOR);
+    }
+    return r;
+  }
+
+  // ── Phase 1: Draw main walkways from map center ───────────────
+  const mcx = Math.floor(W / 2), mcy = Math.floor(H / 2);
+  const numWalkways = 2 + Math.floor(rng() * 4);  // 2–5
+  const reach       = Math.floor(Math.min(W, H) * 0.40) + Math.floor(rng() * 8);
+
+  // Collect axis-aligned segments for building placement, and tip coords for entry/exit
+  const hSegs = [], vSegs = [];  // { y, xlo, xhi } / { x, ylo, yhi }
+  const tips  = [];               // walkway tip coordinates [x, y]
+
+  for (let i = 0; i < numWalkways; i++) {
+    const angle = (i / numWalkways) * Math.PI * 2 + (rng() - 0.5) * 0.7;
+    const ex = Math.max(4, Math.min(W - 5, Math.round(mcx + Math.cos(angle) * reach)));
+    const ey = Math.max(4, Math.min(H - 5, Math.round(mcy + Math.sin(angle) * reach)));
+
+    tips.push([ex, ey]);
+
+    if (rng() < 0.5) {
+      streetH(mcx, ex, mcy);  streetV(mcy, ey, ex);
+      if (Math.abs(ex - mcx) > 5) hSegs.push({ y: mcy, xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+      if (Math.abs(ey - mcy) > 5) vSegs.push({ x: ex,  ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+    } else {
+      streetV(mcy, ey, mcx);  streetH(mcx, ex, ey);
+      if (Math.abs(ey - mcy) > 5) vSegs.push({ x: mcx, ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+      if (Math.abs(ex - mcx) > 5) hSegs.push({ y: ey,  xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+    }
+  }
+
+  // ── Phase 2: Large buildings (2–3) on segments nearest center ─
+  const numLarge = 2 + Math.floor(rng() * 2);
+
+  // Rank segments by distance of their midpoint from map center
+  const byDist = (a, b) => {
+    const da = Math.abs((a.xlo !== undefined ? (a.xlo+a.xhi)/2 : a.x) - mcx)
+             + Math.abs((a.ylo !== undefined ? (a.ylo+a.yhi)/2 : a.y) - mcy);
+    const db = Math.abs((b.xlo !== undefined ? (b.xlo+b.xhi)/2 : b.x) - mcx)
+             + Math.abs((b.ylo !== undefined ? (b.ylo+b.yhi)/2 : b.y) - mcy);
+    return da - db;
+  };
+  const nearSegs = shuffle([...hSegs, ...vSegs].sort(byDist).slice(0, 4));
+
+  let largePlaced = 0;
+  for (let attempt = 0; attempt < nearSegs.length * 3 && largePlaced < numLarge; attempt++) {
+    const seg  = nearSegs[attempt % nearSegs.length];
+    const bw   = 8 + Math.floor(rng() * 6);   // 8–13
+    const bh   = 5 + Math.floor(rng() * 4);   // 5–8
+    const side = rng() < 0.5 ? 1 : -1;
+    let r = null;
+    if (seg.y !== undefined) {
+      const hx = Math.floor((seg.xlo + seg.xhi) / 2) - Math.floor(bw / 2) + Math.floor((rng() - 0.5) * 8);
+      r = placeAlongH(seg.y, side, hx, bw, bh, false);
+    } else {
+      const hy = Math.floor((seg.ylo + seg.yhi) / 2) - Math.floor(bh / 2) + Math.floor((rng() - 0.5) * 8);
+      r = placeAlongV(seg.x, side, hy, bw, bh, false);
+    }
+    if (r) largePlaced++;
+  }
+
+  // ── Phase 3: Small houses along all walkway segments ──────────
+  for (const seg of hSegs) {
+    const len = seg.xhi - seg.xlo;
+    if (len < 5) continue;
+    const n  = 2 + Math.floor(rng() * 3);  // 2–4 houses per segment
+    const sp = Math.floor(len / (n + 1));
+    for (let h = 0; h < n; h++) {
+      const bw   = 3 + Math.floor(rng() * 4);  // 3–6
+      const bh   = 3 + Math.floor(rng() * 3);  // 3–5
+      const side = rng() < 0.5 ? 1 : -1;
+      const hx   = seg.xlo + sp * (h + 1) - Math.floor(bw / 2) + Math.floor((rng() - 0.5) * 4);
+      placeAlongH(seg.y, side, hx, bw, bh, true);
+    }
+  }
+  for (const seg of vSegs) {
+    const len = seg.yhi - seg.ylo;
+    if (len < 5) continue;
+    const n  = 2 + Math.floor(rng() * 3);  // 2–4 houses per segment
+    const sp = Math.floor(len / (n + 1));
+    for (let h = 0; h < n; h++) {
+      const bw   = 3 + Math.floor(rng() * 4);
+      const bh   = 3 + Math.floor(rng() * 3);
+      const side = rng() < 0.5 ? 1 : -1;
+      const hy   = seg.ylo + sp * (h + 1) - Math.floor(bh / 2) + Math.floor((rng() - 0.5) * 4);
+      placeAlongV(seg.x, side, hy, bw, bh, true);
+    }
+  }
+
+  if (rooms.length < 2) return { grid, rooms };
+
+  // ── Phase 4: Roles ────────────────────────────────────────────
+  // Largest of the first largePlaced rooms = Village Hall (boss)
+  const bossRoom = rooms.slice(0, largePlaced || 1).sort((a, b) => b.w * b.h - a.w * a.h)[0];
+  const nonBoss  = rooms.filter(r => r !== bossRoom);
+
+  // Entry and exit are rooms nearest to the two most-separated walkway tips
+  function nearestRoom(px, py, exclude) {
+    return nonBoss
+      .filter(r => !exclude.includes(r))
+      .reduce((best, r) => {
+        const d  = Math.abs(r.cx - px) + Math.abs(r.cy - py);
+        const bd = Math.abs(best.cx - px) + Math.abs(best.cy - py);
+        return d < bd ? r : best;
+      });
+  }
+  let entryTip = tips[0], exitTip = tips[0], maxTipDist = 0;
+  for (let i = 0; i < tips.length; i++)
+    for (let j = i + 1; j < tips.length; j++) {
+      const d = Math.abs(tips[i][0] - tips[j][0]) + Math.abs(tips[i][1] - tips[j][1]);
+      if (d > maxTipDist) { maxTipDist = d; entryTip = tips[i]; exitTip = tips[j]; }
+    }
+  const entryRoom = nearestRoom(entryTip[0], entryTip[1], []);
+  const exitRoom  = nearestRoom(exitTip[0],  exitTip[1],  [entryRoom]);
+
+  for (const r of rooms) {
+    if      (r === bossRoom)   r.role = 'boss';
+    else if (r === entryRoom)  r.role = 'entry';
+    else if (r === exitRoom)   r.role = 'exit';
+    else if (r.w * r.h <= 15) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 5: Content ──────────────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (!f.length) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (!f.length) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    for (let i = 0; i < Math.min(count, f.length); i++) gset(f[i][0], f[i][1], type);
+  }
+
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible  = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  return { grid, rooms };
+}
+
 // ── Canvas renderer ───────────────────────────────────────────
 function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
   canvas.width  = W * px;
@@ -1514,13 +1808,15 @@ function generate() {
   const rng  = makePRNG(seed);
 
   const { W, H, px, depth } = pickDimensions(sizeKey, rng);
-  const useCA   = (theme.id === 'beast'  || theme.id === 'forest');
-  const useGrid = (theme.id === 'sewer'  || theme.id === 'prison');
-  const useHub  = (theme.id === 'dragon');
-  const { grid, rooms } = useCA   ? generateDungeonDrunkCA(W, H, theme, rng)
-                        : useGrid ? generateDungeonGridTunnel(W, H, theme, rng)
-                        : useHub  ? generateDungeonHubSpoke(W, H, theme, rng)
-                        :           generateDungeon(W, H, theme, rng, depth);
+  const useCA      = (theme.id === 'beast'   || theme.id === 'forest');
+  const useGrid    = (theme.id === 'sewer'   || theme.id === 'prison');
+  const useHub     = (theme.id === 'dragon');
+  const useScatter = (theme.id === 'village');
+  const { grid, rooms } = useCA      ? generateDungeonDrunkCA(W, H, theme, rng)
+                        : useGrid    ? generateDungeonGridTunnel(W, H, theme, rng)
+                        : useHub     ? generateDungeonHubSpoke(W, H, theme, rng)
+                        : useScatter ? generateDungeonScatter(W, H, theme, rng)
+                        :              generateDungeon(W, H, theme, rng, depth);
   const canvas = document.getElementById('dungeonCanvas');
   renderDungeon(canvas, grid, rooms, W, H, px, theme);
 
@@ -1529,7 +1825,7 @@ function generate() {
   for (const t of grid) counts[t] = (counts[t] || 0) + 1;
 
   document.getElementById('statAlgorithm').textContent =
-    useCA ? 'Drunk-walk + CA' : useGrid ? 'Grid Tunnel' : useHub ? 'Hub & Spoke' : 'BSP';
+    useCA ? 'Drunk-walk + CA' : useGrid ? 'Grid Tunnel' : useHub ? 'Hub & Spoke' : useScatter ? 'Scatter' : 'BSP';
   document.getElementById('statGrid').textContent     = `${W} × ${H}`;
   document.getElementById('statRooms').textContent    = rooms.length;
   document.getElementById('statEnemies').textContent  = counts[T.ENEMY]    || 0;
