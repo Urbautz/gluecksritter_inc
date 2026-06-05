@@ -86,7 +86,7 @@ Each theme uses an algorithm suited to its spatial feel:
 | Sewer | Grid Tunnel | Tunnel, Junction, Cistern, Refuse Heap, Boss Chamber |
 | Dragon Hoard | Hub-and-Spoke | Narrow Pass, Treasure Hall, Roost, Boss Lair |
 | Forest | Drunk-walk + CA | Game Trail, Clearing, Druid Grove, Predator Den, Ancient Tree |
-| Prison | Grid Tunnel | Cell Block, Guard Post, Armoury, Torture Chamber, Warden's Office |
+| Prison | ??? | Cell Block, Guard Post, Armoury, Torture Chamber, Warden's Office |
 | Fortress | BSP | Gatehouse, Barracks Hall, Great Hall, Armoury, Throne Room |
 | Abandoned Village | Scatter | Street, Ruined House, Cellar, Town Square, Village Hall |
 

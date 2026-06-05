@@ -184,7 +184,7 @@
 
 <header>
   <h1>Glückritter Inc — Dungeon Creator</h1>
-  <p class="subtitle">BSP · Drunk-walk + CA · tile map</p>
+  <p class="subtitle">BSP · Drunk-walk + CA · Grid Tunnel · Hub &amp; Spoke · tile map</p>
 </header>
 
 <div class="rule-box" id="themeBox">
@@ -943,6 +943,474 @@ function generateDungeonDrunkCA(W, H, theme, rng) {
   return { grid, rooms };
 }
 
+// ── Grid Tunnel Dungeon Generator ────────────────────────────
+function generateDungeonGridTunnel(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Phase 1: Grid Layout ──────────────────────────────────────
+  const ROOM_W = 5 + Math.floor(rng() * 3);  // 5–7 tiles wide
+  const ROOM_H = 4 + Math.floor(rng() * 3);  // 4–6 tiles tall
+
+  const TARGET_STEP = 20 + Math.floor(rng() * 6);  // 20–25 tiles between centers
+  const cols = Math.max(2, Math.min(7, Math.round(W / TARGET_STEP)));
+  const rows = Math.max(2, Math.min(5, Math.round(H / TARGET_STEP)));
+
+  const H_STEP = Math.floor(W / cols);
+  const V_STEP = Math.floor(H / rows);
+
+  // Fixed grid lines with ±1 tile jitter for a lived-in look
+  const colX = Array.from({length: cols}, (_, c) =>
+    Math.round(H_STEP * (c + 0.5)) + Math.floor(rng() * 3) - 1);
+  const rowY = Array.from({length: rows}, (_, r) =>
+    Math.round(V_STEP * (r + 0.5)) + Math.floor(rng() * 3) - 1);
+
+  const roomGrid = Array.from({length: rows}, () => Array(cols).fill(null));
+  const rooms = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cx = colX[c], cy = rowY[r];
+      const rx = cx - Math.floor(ROOM_W / 2);
+      const ry = cy - Math.floor(ROOM_H / 2);
+      if (rx < 1 || ry < 1 || rx + ROOM_W >= W - 1 || ry + ROOM_H >= H - 1) continue;
+      for (let dy = 0; dy < ROOM_H; dy++)
+        for (let dx = 0; dx < ROOM_W; dx++)
+          gset(rx + dx, ry + dy, T.FLOOR);
+      const room = { x: rx, y: ry, w: ROOM_W, h: ROOM_H, cx, cy, role: 'chamber' };
+      rooms.push(room);
+      roomGrid[r][c] = room;
+    }
+  }
+
+  if (rooms.length === 0) return { grid, rooms: [] };
+
+  // ── Phase 2: Tunnel Carving (spanning tree + extra loops) ─────
+  function carveStraightH(x1, x2, y) {
+    for (let x = x1; x <= x2; x++) {
+      if (y     >= 1 && y     < H - 1) gset(x, y,     T.FLOOR);
+      if (y + 1 >= 1 && y + 1 < H - 1) gset(x, y + 1, T.FLOOR);
+    }
+  }
+  function carveStraightV(y1, y2, x) {
+    for (let y = y1; y <= y2; y++) {
+      if (x     >= 1 && x     < W - 1) gset(x,     y, T.FLOOR);
+      if (x + 1 >= 1 && x + 1 < W - 1) gset(x + 1, y, T.FLOOR);
+    }
+  }
+
+  const edges = [];
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      if (!roomGrid[r][c]) continue;
+      if (c + 1 < cols && roomGrid[r][c + 1]) edges.push({ r, c, r2: r,     c2: c + 1, dir: 'h' });
+      if (r + 1 < rows && roomGrid[r + 1][c]) edges.push({ r, c, r2: r + 1, c2: c,     dir: 'v' });
+    }
+
+  const uf      = rooms.map((_, i) => i);
+  const roomIdx = new Map(rooms.map((rm, i) => [rm, i]));
+  function findUF(i) { while (uf[i] !== i) { uf[i] = uf[uf[i]]; i = uf[i]; } return i; }
+  function unionUF(a, b) { const ra = findUF(a), rb = findUF(b); if (ra !== rb) uf[ra] = rb; }
+
+  function carveEdge(e) {
+    const a = roomGrid[e.r][e.c], b = roomGrid[e.r2][e.c2];
+    if (e.dir === 'h') carveStraightH(Math.min(a.cx, b.cx), Math.max(a.cx, b.cx), rowY[e.r]);
+    else               carveStraightV(Math.min(a.cy, b.cy), Math.max(a.cy, b.cy), colX[e.c]);
+  }
+
+  shuffle(edges);
+  const usedEdges = new Set();
+  for (const e of edges) {
+    const ia = roomIdx.get(roomGrid[e.r][e.c]);
+    const ib = roomIdx.get(roomGrid[e.r2][e.c2]);
+    if (findUF(ia) !== findUF(ib)) {
+      unionUF(ia, ib);
+      usedEdges.add(e);
+      carveEdge(e);
+    }
+  }
+  for (const e of edges)
+    if (!usedEdges.has(e) && rng() < 0.35) carveEdge(e);
+
+  // ── Phase 3: Role Assignment ──────────────────────────────────
+  rooms.sort((a, b) => a.cx - b.cx);
+  const entryRoom = rooms[0];
+
+  let exitRoom = rooms[rooms.length - 1], maxDist = 0;
+  for (const r of rooms) {
+    const d = Math.abs(r.cx - entryRoom.cx) + Math.abs(r.cy - entryRoom.cy);
+    if (d > maxDist) { maxDist = d; exitRoom = r; }
+  }
+
+  let bossRoom = null, minDist = Infinity;
+  for (const r of rooms) {
+    if (r === exitRoom) continue;
+    const d = Math.abs(r.cx - exitRoom.cx) + Math.abs(r.cy - exitRoom.cy);
+    if (d < minDist) { minDist = d; bossRoom = r; }
+  }
+  if (!bossRoom) bossRoom = entryRoom;
+
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.w * r.h <= 20) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 4: Content Placement ────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  // Doors: straight 2-tile corridors between rooms are detected same as BSP
+  const isInAnyRoom = (x, y) =>
+    rooms.some(rm => x >= rm.x && x < rm.x + rm.w && y >= rm.y && y < rm.y + rm.h);
+  const isCorridor = (x, y) => x > 0 && x < W-1 && y > 0 && y < H-1
+                              && gget(x, y) === T.FLOOR && !isInAnyRoom(x, y);
+  const exactTwo = coords => {
+    const out = []; let run = [];
+    for (const c of coords) {
+      if (isCorridor(c[0], c[1])) { run.push(c); }
+      else { if (run.length === 2) out.push([run[0], run[1]]); run = []; }
+    }
+    if (run.length === 2) out.push([run[0], run[1]]);
+    return out;
+  };
+  for (const r of rooms) {
+    if (r.role !== 'chamber') continue;
+    if (rng() >= 0.45) continue;
+    const pairs = [];
+    if (r.y > 0)     pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y-1])));
+    if (r.y+r.h < H) pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y+r.h])));
+    if (r.x > 0)     pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x-1, r.y+i])));
+    if (r.x+r.w < W) pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x+r.w, r.y+i])));
+    if (pairs.length > 0) {
+      const p = pairs[Math.floor(rng() * pairs.length)];
+      gset(p[0][0], p[0][1], T.DOOR);
+      gset(p[1][0], p[1][1], T.DOOR);
+    }
+  }
+
+  return { grid, rooms };
+}
+
+// ── Hub-and-Spoke Dungeon Generator ──────────────────────────
+function generateDungeonHubSpoke(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // 2-tile-wide L-shaped corridor (same as BSP)
+  function carveWide(x0, y0, x1, y1) {
+    const hFirst = rng() < 0.5;
+    const yo = rng() < 0.5 ? 1 : -1;
+    const xo = rng() < 0.5 ? 1 : -1;
+    function hSeg(fx, tx, ay) {
+      const s = fx <= tx ? 1 : -1;
+      for (let x = fx; x !== tx + s; x += s) {
+        gset(x, ay, T.FLOOR);
+        const ny = ay + yo;
+        if (ny > 0 && ny < H - 1) gset(x, ny, T.FLOOR);
+      }
+    }
+    function vSeg(ax, fy, ty) {
+      const s = fy <= ty ? 1 : -1;
+      for (let y = fy; y !== ty + s; y += s) {
+        gset(ax, y, T.FLOOR);
+        const nx = ax + xo;
+        if (nx > 0 && nx < W - 1) gset(nx, y, T.FLOOR);
+      }
+    }
+    if (hFirst) { hSeg(x0, x1, y0); vSeg(x1, y0, y1); }
+    else        { vSeg(x0, y0, y1); hSeg(x0, x1, y1); }
+  }
+
+  // ── Phase 1: Hub Room (large central chamber) ─────────────────
+  const HUB_W = 10 + Math.floor(rng() * 5);   // 10–14 tiles
+  const HUB_H =  8 + Math.floor(rng() * 5);   // 8–12 tiles
+  const hubCx = Math.floor(W / 2);
+  const hubCy = Math.floor(H / 2);
+  const hubRx = hubCx - Math.floor(HUB_W / 2);
+  const hubRy = hubCy - Math.floor(HUB_H / 2);
+
+  for (let by = 0; by < HUB_H; by++)
+    for (let bx = 0; bx < HUB_W; bx++)
+      gset(hubRx + bx, hubRy + by, T.FLOOR);
+
+  const hubRoom = { x: hubRx, y: hubRy, w: HUB_W, h: HUB_H,
+                    cx: hubCx, cy: hubCy, role: 'boss' };
+
+  // ── Phase 2: Spoke Rooms radiating outward ────────────────────
+  const numSpokes     = 8 + Math.floor(rng() * 6);    // 8–13
+  const maxDist       = Math.floor(Math.min(W, H) / 2) - 12;
+  const SPOKE_DIST    = Math.min(18 + Math.floor(rng() * 8), maxDist);  // 18–25, clamped
+  const BASE_SPOKE_W  = 5 + Math.floor(rng() * 3);    // 5–7
+  const BASE_SPOKE_H  = 4 + Math.floor(rng() * 3);    // 4–6
+
+  const rooms      = [hubRoom];
+  const spokeRooms = [];
+
+  for (let i = 0; i < numSpokes; i++) {
+    const baseAngle = (i / numSpokes) * Math.PI * 2;
+    const jitter    = (rng() - 0.5) * (Math.PI / numSpokes * 0.4);
+    const angle     = baseAngle + jitter;
+
+    const spDx = Math.round(Math.cos(angle) * SPOKE_DIST);
+    const spDy = Math.round(Math.sin(angle) * SPOKE_DIST);
+    const scx  = hubCx + spDx;
+    const scy  = hubCy + spDy;
+    const sw   = BASE_SPOKE_W + Math.floor(rng() * 2);
+    const sh   = BASE_SPOKE_H + Math.floor(rng() * 2);
+    const srx  = scx - Math.floor(sw / 2);
+    const sry  = scy - Math.floor(sh / 2);
+
+    if (srx < 1 || sry < 1 || srx + sw >= W - 1 || sry + sh >= H - 1) continue;
+
+    for (let by = 0; by < sh; by++)
+      for (let bx = 0; bx < sw; bx++)
+        gset(srx + bx, sry + by, T.FLOOR);
+
+    const spoke = { x: srx, y: sry, w: sw, h: sh, cx: scx, cy: scy, role: 'chamber' };
+    rooms.push(spoke);
+    spokeRooms.push(spoke);
+  }
+
+  if (spokeRooms.length === 0) return { grid, rooms: [] };
+
+  // ── Phase 3: Tunnels from hub to each spoke ───────────────────
+  for (const spoke of spokeRooms)
+    carveWide(hubCx, hubCy, spoke.cx, spoke.cy);
+
+  // ── Phase 3b: Secondary rooms off spoke tips (~45% each) ──────
+  for (const spoke of [...spokeRooms]) {
+    if (rng() >= 0.45) continue;
+    const angle     = Math.atan2(spoke.cy - hubCy, spoke.cx - hubCx);
+    const extraDist = 12 + Math.floor(rng() * 8);  // 12–19 tiles farther out
+    const scx2 = Math.round(spoke.cx + Math.cos(angle) * extraDist);
+    const scy2 = Math.round(spoke.cy + Math.sin(angle) * extraDist);
+    const sw2  = 4 + Math.floor(rng() * 4);  // 4–7
+    const sh2  = 3 + Math.floor(rng() * 4);  // 3–6
+    const srx2 = scx2 - Math.floor(sw2 / 2);
+    const sry2 = scy2 - Math.floor(sh2 / 2);
+    if (srx2 < 1 || sry2 < 1 || srx2 + sw2 >= W - 1 || sry2 + sh2 >= H - 1) continue;
+    for (let by = 0; by < sh2; by++)
+      for (let bx = 0; bx < sw2; bx++)
+        gset(srx2 + bx, sry2 + by, T.FLOOR);
+    const sec = { x: srx2, y: sry2, w: sw2, h: sh2, cx: scx2, cy: scy2, role: 'chamber' };
+    rooms.push(sec);
+    carveWide(spoke.cx, spoke.cy, scx2, scy2);
+  }
+
+  // ── Phase 4: 1–2 random loops across all non-hub rooms ────────
+  const loopCount = 1 + Math.floor(rng() * 2);
+  const loopPool  = shuffle(rooms.filter(r => r !== hubRoom));
+  for (let i = 0; i < Math.min(loopCount, loopPool.length - 1); i++)
+    carveWide(loopPool[i].cx, loopPool[i].cy, loopPool[i + 1].cx, loopPool[i + 1].cy);
+
+  // ── Phase 5: Roles (hub is always boss) ───────────────────────
+  const nonHub    = rooms.filter(r => r !== hubRoom);
+  const entryRoom = nonHub.reduce((a, b) => a.cx < b.cx ? a : b);
+  const exitRoom  = nonHub.reduce((a, b) => {
+    const da = Math.abs(a.cx - entryRoom.cx) + Math.abs(a.cy - entryRoom.cy);
+    const db = Math.abs(b.cx - entryRoom.cx) + Math.abs(b.cy - entryRoom.cy);
+    return da > db ? a : b;
+  });
+  const bossRoom = hubRoom;
+
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.w * r.h <= 20) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 6: Content Placement ────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let by = 0; by < r.h; by++)
+      for (let bx = 0; bx < r.w; bx++)
+        if (gget(r.x + bx, r.y + by) === T.FLOOR) tiles.push([r.x + bx, r.y + by]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible  = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  const isInAnyRoom = (x, y) =>
+    rooms.some(rm => x >= rm.x && x < rm.x + rm.w && y >= rm.y && y < rm.y + rm.h);
+  const isCorridor = (x, y) => x > 0 && x < W-1 && y > 0 && y < H-1
+                              && gget(x, y) === T.FLOOR && !isInAnyRoom(x, y);
+  const exactTwo = coords => {
+    const out = []; let run = [];
+    for (const c of coords) {
+      if (isCorridor(c[0], c[1])) { run.push(c); }
+      else { if (run.length === 2) out.push([run[0], run[1]]); run = []; }
+    }
+    if (run.length === 2) out.push([run[0], run[1]]);
+    return out;
+  };
+  for (const r of rooms) {
+    if (r.role !== 'chamber') continue;
+    if (rng() >= 0.45) continue;
+    const pairs = [];
+    if (r.y > 0)     pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y-1])));
+    if (r.y+r.h < H) pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y+r.h])));
+    if (r.x > 0)     pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x-1, r.y+i])));
+    if (r.x+r.w < W) pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x+r.w, r.y+i])));
+    if (pairs.length > 0) {
+      const p = pairs[Math.floor(rng() * pairs.length)];
+      gset(p[0][0], p[0][1], T.DOOR);
+      gset(p[1][0], p[1][1], T.DOOR);
+    }
+  }
+
+  return { grid, rooms };
+}
+
 // ── Canvas renderer ───────────────────────────────────────────
 function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
   canvas.width  = W * px;
@@ -1046,10 +1514,13 @@ function generate() {
   const rng  = makePRNG(seed);
 
   const { W, H, px, depth } = pickDimensions(sizeKey, rng);
-  const useCA = (theme.id === 'beast' || theme.id === 'forest');
-  const { grid, rooms } = useCA
-    ? generateDungeonDrunkCA(W, H, theme, rng)
-    : generateDungeon(W, H, theme, rng, depth);
+  const useCA   = (theme.id === 'beast'  || theme.id === 'forest');
+  const useGrid = (theme.id === 'sewer'  || theme.id === 'prison');
+  const useHub  = (theme.id === 'dragon');
+  const { grid, rooms } = useCA   ? generateDungeonDrunkCA(W, H, theme, rng)
+                        : useGrid ? generateDungeonGridTunnel(W, H, theme, rng)
+                        : useHub  ? generateDungeonHubSpoke(W, H, theme, rng)
+                        :           generateDungeon(W, H, theme, rng, depth);
   const canvas = document.getElementById('dungeonCanvas');
   renderDungeon(canvas, grid, rooms, W, H, px, theme);
 
@@ -1057,7 +1528,8 @@ function generate() {
   const counts = {};
   for (const t of grid) counts[t] = (counts[t] || 0) + 1;
 
-  document.getElementById('statAlgorithm').textContent = useCA ? 'Drunk-walk + CA' : 'BSP';
+  document.getElementById('statAlgorithm').textContent =
+    useCA ? 'Drunk-walk + CA' : useGrid ? 'Grid Tunnel' : useHub ? 'Hub & Spoke' : 'BSP';
   document.getElementById('statGrid').textContent     = `${W} × ${H}`;
   document.getElementById('statRooms').textContent    = rooms.length;
   document.getElementById('statEnemies').textContent  = counts[T.ENEMY]    || 0;
