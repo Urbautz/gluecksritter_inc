@@ -184,7 +184,7 @@
 
 <header>
   <h1>Glückritter Inc — Dungeon Creator</h1>
-  <p class="subtitle">BSP · Drunk-walk + CA · Grid Tunnel · Hub &amp; Spoke · Scatter · tile map</p>
+  <p class="subtitle">BSP · Drunk-walk + CA · Grid Tunnel · Hub &amp; Spoke · Scatter · Cell Block · tile map</p>
 </header>
 
 <div class="rule-box" id="themeBox">
@@ -1705,6 +1705,284 @@ function generateDungeonScatter(W, H, theme, rng) {
   return { grid, rooms };
 }
 
+// ── Cell Block (Prison) Dungeon Generator ──────────────────────
+function generateDungeonCellBlock(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { if (x >= 0 && x < W && y >= 0 && y < H) grid[y * W + x] = t; }
+  function gget(x, y)    { return (x >= 0 && x < W && y >= 0 && y < H) ? grid[y * W + x] : T.WALL; }
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  const rooms  = [];
+  const blocks = []; // placed building rects for overlap detection
+
+  function blockOverlaps(bx, by, bw, bh) {
+    return blocks.some(b =>
+      bx < b.x + b.w + 2 && bx + bw + 2 > b.x &&
+      by < b.y + b.h + 2 && by + bh + 2 > b.y
+    );
+  }
+
+  // Map-consistent cell sizing
+  const cellW    = 3 + Math.floor(rng() * 3);  // 3–5 tiles per cell
+  const cellRowH = 2 + Math.floor(rng() * 2);  // 2–3 rows per cell row
+  const BLOCK_H  = cellRowH * 2 + 4;           // cells + wall + 2-corridor + wall + cells
+
+  // Carve a cell block building and subdivide into cells internally.
+  // Returns the corridor room object, or null if blocked / too small.
+  function placeBlock(bxIn, byIn, bw, bh) {
+    const bx = Math.max(2, Math.min(W - bw - 2, bxIn));
+    const by = Math.max(2, Math.min(H - bh - 2, byIn));
+    if (bw < cellW * 2 + 3 || bh < BLOCK_H) return null;
+    if (blockOverlaps(bx, by, bw, bh)) return null;
+    blocks.push({ x: bx, y: by, w: bw, h: bh });
+
+    // Full floor rectangle
+    for (let dy = 0; dy < bh; dy++)
+      for (let dx = 0; dx < bw; dx++)
+        gset(bx + dx, by + dy, T.FLOOR);
+
+    const wallY1 = by + cellRowH;            // top separator wall
+    const wallY2 = by + bh - cellRowH - 1;  // bottom separator wall
+    const corrY  = wallY1 + 1;              // top of 2-tile corridor
+
+    // Draw horizontal separator walls (overwrite floor)
+    for (let x = bx; x < bx + bw; x++) {
+      gset(x, wallY1, T.WALL);
+      gset(x, wallY2, T.WALL);
+    }
+
+    // Cells + vertical dividers + single-tile door/gap in each separator wall
+    const numCells = Math.max(1, Math.floor((bw - 1) / (cellW + 1)));
+    const span     = numCells * (cellW + 1) - 1;
+    const startX   = bx + 1 + Math.floor((bw - 2 - span) / 2);
+
+    for (let c = 0; c < numCells; c++) {
+      const cx   = startX + c * (cellW + 1);
+      const midX = cx + Math.floor(cellW / 2);
+      if (cx + cellW > bx + bw - 1) break;
+
+      // Vertical dividers between cells (left wall of each cell, skip first)
+      if (c > 0) {
+        const divX = cx - 1;
+        for (let y = by; y < wallY1; y++) gset(divX, y, T.WALL);
+        for (let y = wallY2 + 1; y < by + bh; y++) gset(divX, y, T.WALL);
+      }
+
+      // Single-tile gap in each separator wall — door (65%) or open (35%)
+      gset(midX, wallY1, rng() < 0.65 ? T.DOOR : T.FLOOR);
+      gset(midX, wallY2, rng() < 0.65 ? T.DOOR : T.FLOOR);
+
+      // Cell rooms (top and bottom)
+      rooms.push({ x: cx, y: by, w: cellW, h: cellRowH,
+                   cx: midX, cy: by + Math.floor(cellRowH / 2),
+                   role: 'passage', area: cellW * cellRowH });
+      rooms.push({ x: cx, y: wallY2 + 1, w: cellW, h: cellRowH,
+                   cx: midX, cy: wallY2 + 1 + Math.floor(cellRowH / 2),
+                   role: 'passage', area: cellW * cellRowH });
+    }
+
+    // Corridor room (the walkable central strip)
+    const corrH = wallY2 - corrY;
+    const corr  = { x: bx, y: corrY, w: bw, h: corrH,
+                    cx: bx + Math.floor(bw / 2), cy: corrY + Math.floor(corrH / 2),
+                    role: 'chamber', area: bw * corrH };
+    rooms.push(corr);
+    return corr;
+  }
+
+  // ── Phase 1: Walkways from center (Scatter-style) ─────────────
+  const mcx = Math.floor(W / 2), mcy = Math.floor(H / 2);
+  const numWalkways = 2 + Math.floor(rng() * 3);  // 2–4
+  const reach = Math.floor(Math.min(W, H) * 0.38) + Math.floor(rng() * 8);
+  const tips  = [];
+  const hSegs = [], vSegs = [];
+
+  function streetH(x1, x2, y) {
+    const lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+    for (let x = lo; x <= hi; x++) { gset(x, y, T.FLOOR); gset(x, y + 1, T.FLOOR); }
+  }
+  function streetV(y1, y2, x) {
+    const lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+    for (let y = lo; y <= hi; y++) { gset(x, y, T.FLOOR); gset(x + 1, y, T.FLOOR); }
+  }
+
+  for (let i = 0; i < numWalkways; i++) {
+    const angle = (i / numWalkways) * Math.PI * 2 + (rng() - 0.5) * 0.6;
+    const ex = Math.max(5, Math.min(W - 6, Math.round(mcx + Math.cos(angle) * reach)));
+    const ey = Math.max(5, Math.min(H - 6, Math.round(mcy + Math.sin(angle) * reach)));
+    tips.push([ex, ey]);
+    if (rng() < 0.5) {
+      streetH(mcx, ex, mcy); streetV(mcy, ey, ex);
+      if (Math.abs(ex - mcx) > 10) hSegs.push({ y: mcy, xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+      if (Math.abs(ey - mcy) > 10) vSegs.push({ x: ex,  ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+    } else {
+      streetV(mcy, ey, mcx); streetH(mcx, ex, ey);
+      if (Math.abs(ey - mcy) > 10) vSegs.push({ x: mcx, ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+      if (Math.abs(ex - mcx) > 10) hSegs.push({ y: ey,  xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+    }
+  }
+
+  // ── Phase 2: Place cell blocks along segments ─────────────────
+  // Horizontal segments: buildings above and below
+  for (const seg of hSegs) {
+    const segLen = seg.xhi - seg.xlo;
+    if (segLen < cellW * 3 + 6) continue;
+    for (const side of shuffle([1, -1])) {
+      const numBlocks = 1 + Math.floor(rng() * 2);
+      const slotW = Math.floor(segLen / numBlocks);
+      const bw    = Math.max(cellW * 3, slotW - 3);
+      for (let b = 0; b < numBlocks; b++) {
+        const bx  = seg.xlo + 2 + b * slotW + Math.floor(rng() * 3);
+        const by  = side === 1 ? seg.y + 3 : seg.y - BLOCK_H - 2;
+        const corr = placeBlock(bx, by, Math.min(bw, seg.xhi - bx - 2), BLOCK_H);
+        if (corr) {
+          // Punch vertical connection from street to the building's corridor
+          const ax  = corr.cx;
+          const y0  = Math.min(seg.y + 2, corr.cy);
+          const y1  = Math.max(seg.y + 1, corr.cy);
+          for (let y = y0; y <= y1; y++) gset(ax, y, T.FLOOR);
+        }
+      }
+    }
+  }
+
+  // Vertical segments: buildings left and right
+  for (const seg of vSegs) {
+    const segLen = seg.yhi - seg.ylo;
+    if (segLen < BLOCK_H + 4) continue;
+    for (const side of shuffle([1, -1])) {
+      const numBlocks = 1 + Math.floor(rng() * 2);
+      const slotH = Math.floor(segLen / numBlocks);
+      const bw    = Math.max(cellW * 3, Math.min(Math.floor(W * 0.28), 22));
+      for (let b = 0; b < numBlocks; b++) {
+        const by  = seg.ylo + 2 + b * slotH + Math.floor(rng() * 3);
+        const bx  = side === 1 ? seg.x + 3 : seg.x - bw - 2;
+        const corr = placeBlock(bx, by, bw, BLOCK_H);
+        if (corr) {
+          // Punch horizontal connection from segment to the building's corridor
+          const ay  = corr.cy;
+          const x0  = Math.min(seg.x + 2, corr.cx);
+          const x1  = Math.max(seg.x + 1, corr.cx);
+          for (let x = x0; x <= x1; x++) gset(x, ay, T.FLOOR);
+        }
+      }
+    }
+  }
+
+  // ── Phase 3: Warden's Office (boss) at center ─────────────────
+  const wardW = 8 + Math.floor(rng() * 4);
+  const wardH = 5 + Math.floor(rng() * 3);
+  const wardX = Math.max(2, Math.min(W - wardW - 2, mcx - Math.floor(wardW / 2)));
+  const wardY = Math.max(2, Math.min(H - wardH - 2, mcy - Math.floor(wardH / 2)));
+  for (let dy = 0; dy < wardH; dy++)
+    for (let dx = 0; dx < wardW; dx++)
+      gset(wardX + dx, wardY + dy, T.FLOOR);
+  blocks.push({ x: wardX, y: wardY, w: wardW, h: wardH });
+  const bossRoom = { x: wardX, y: wardY, w: wardW, h: wardH,
+                     cx: wardX + Math.floor(wardW / 2), cy: wardY + Math.floor(wardH / 2),
+                     role: 'boss', area: wardW * wardH };
+  rooms.push(bossRoom);
+
+  if (rooms.length < 3) return { grid, rooms };
+
+  // ── Phase 4: Entry / Exit at walkway tips ─────────────────────
+  function nearestRoom(px, py, exclude) {
+    const cands = rooms.filter(r => !exclude.includes(r));
+    if (!cands.length) return null;
+    return cands.reduce((best, r) => {
+      const d  = Math.abs(r.cx - px) + Math.abs(r.cy - py);
+      const bd = Math.abs(best.cx - px) + Math.abs(best.cy - py);
+      return d < bd ? r : best;
+    });
+  }
+
+  let entryTip = tips[0], exitTip = tips[tips.length - 1], maxD = 0;
+  for (let i = 0; i < tips.length; i++)
+    for (let j = i + 1; j < tips.length; j++) {
+      const d = Math.abs(tips[i][0] - tips[j][0]) + Math.abs(tips[i][1] - tips[j][1]);
+      if (d > maxD) { maxD = d; entryTip = tips[i]; exitTip = tips[j]; }
+    }
+
+  const entryRoom = nearestRoom(entryTip[0], entryTip[1], [bossRoom]) || rooms[0];
+  const exitRoom  = nearestRoom(exitTip[0],  exitTip[1],  [bossRoom, entryRoom]) || rooms[1];
+
+  for (const r of rooms) {
+    if      (r === bossRoom)  r.role = 'boss';
+    else if (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    // cells stay 'passage', block corridors stay 'chamber'
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 5: Content ──────────────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r); if (!f.length) return;
+    const [x, y] = f[Math.floor(rng() * f.length)]; gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r); if (!f.length) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    for (let i = 0; i < Math.min(count, f.length); i++) gset(f[i][0], f[i][1], type);
+  }
+
+  // Boss guards around Warden
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (gget(nx, ny) === T.FLOOR) guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(2 + Math.floor(rng() * 3), guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible  = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 4);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 1 + Math.floor(rng() * 5));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE); if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.28) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'chamber') {
+        placeOne(r, T.TRAP); if (rng() < 0.45) placeOne(r, T.TRAP);
+      } else if (r.role === 'passage') {
+        if (rng() < 0.50) placeOne(r, T.TRAP);
+      } else if (rng() < 0.30) {
+        placeOne(r, rng() < 0.6 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  return { grid, rooms };
+}
+
 // ── Canvas renderer ───────────────────────────────────────────
 function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
   canvas.width  = W * px;
@@ -1808,15 +2086,17 @@ function generate() {
   const rng  = makePRNG(seed);
 
   const { W, H, px, depth } = pickDimensions(sizeKey, rng);
-  const useCA      = (theme.id === 'beast'   || theme.id === 'forest');
-  const useGrid    = (theme.id === 'sewer'   || theme.id === 'prison');
-  const useHub     = (theme.id === 'dragon');
-  const useScatter = (theme.id === 'village');
-  const { grid, rooms } = useCA      ? generateDungeonDrunkCA(W, H, theme, rng)
-                        : useGrid    ? generateDungeonGridTunnel(W, H, theme, rng)
-                        : useHub     ? generateDungeonHubSpoke(W, H, theme, rng)
-                        : useScatter ? generateDungeonScatter(W, H, theme, rng)
-                        :              generateDungeon(W, H, theme, rng, depth);
+  const useCA        = (theme.id === 'beast'   || theme.id === 'forest');
+  const useGrid      = (theme.id === 'sewer');
+  const useHub       = (theme.id === 'dragon');
+  const useScatter   = (theme.id === 'village');
+  const useCellBlock = (theme.id === 'prison');
+  const { grid, rooms } = useCA        ? generateDungeonDrunkCA(W, H, theme, rng)
+                        : useGrid      ? generateDungeonGridTunnel(W, H, theme, rng)
+                        : useHub       ? generateDungeonHubSpoke(W, H, theme, rng)
+                        : useScatter   ? generateDungeonScatter(W, H, theme, rng)
+                        : useCellBlock ? generateDungeonCellBlock(W, H, theme, rng)
+                        :                generateDungeon(W, H, theme, rng, depth);
   const canvas = document.getElementById('dungeonCanvas');
   renderDungeon(canvas, grid, rooms, W, H, px, theme);
 
@@ -1825,7 +2105,8 @@ function generate() {
   for (const t of grid) counts[t] = (counts[t] || 0) + 1;
 
   document.getElementById('statAlgorithm').textContent =
-    useCA ? 'Drunk-walk + CA' : useGrid ? 'Grid Tunnel' : useHub ? 'Hub & Spoke' : useScatter ? 'Scatter' : 'BSP';
+    useCA ? 'Drunk-walk + CA' : useGrid ? 'Grid Tunnel' : useHub ? 'Hub & Spoke'
+    : useScatter ? 'Scatter' : useCellBlock ? 'Cell Block' : 'BSP';
   document.getElementById('statGrid').textContent     = `${W} × ${H}`;
   document.getElementById('statRooms').textContent    = rooms.length;
   document.getElementById('statEnemies').textContent  = counts[T.ENEMY]    || 0;
