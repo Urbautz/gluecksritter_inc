@@ -22,11 +22,11 @@
     text-shadow: 0 0 24px rgba(240,192,64,0.35);
     margin-bottom: 0.2rem;
   }
-  p.subtitle { color: #555; font-size: 0.8rem; letter-spacing: 0.05em; }
+  p.subtitle { color: #777; font-size: 0.8rem; letter-spacing: 0.05em; }
 
   /* ── Theme rule box ──────────────────────────────── */
   .rule-box {
-    background: #0c0c20; border: 1px solid #252545;
+    background: #0e0e24; border: 1px solid #343460;
     border-left: 3px solid #f0c040;
     border-radius: 0 6px 6px 0;
     padding: 0.85rem 1.2rem; margin-bottom: 1.8rem;
@@ -36,14 +36,14 @@
     color: #f0c040; font-weight: bold; font-size: 0.9rem;
     margin-bottom: 0.35rem; letter-spacing: 0.04em; text-transform: uppercase;
   }
-  .rule-row { color: #666; line-height: 1.8; }
-  .rule-row b { color: #a0a0c0; }
+  .rule-row { color: #8a8aaa; line-height: 1.8; }
+  .rule-row b { color: #c0c0e0; }
 
   /* ── Controls ────────────────────────────────────── */
   .controls {
     display: flex; gap: 1rem; flex-wrap: wrap;
     margin-bottom: 2rem; align-items: flex-end;
-    background: #0c0c20; border: 1px solid #252545;
+    background: #0e0e24; border: 1px solid #343460;
     border-radius: 6px; padding: 0.9rem 1.1rem;
   }
   .ctrl-group { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -86,7 +86,7 @@
   /* ── Canvas ──────────────────────────────────────── */
   .canvas-wrap {
     background: #07070e;
-    border: 1px solid #252545;
+    border: 1px solid #343460;
     border-radius: 6px;
     overflow: hidden;
     flex-shrink: 0;
@@ -95,8 +95,8 @@
 
   /* ── Stats panel ─────────────────────────────────── */
   .panel {
-    background: #0c0c20;
-    border: 1px solid #252545;
+    background: #0e0e24;
+    border: 1px solid #343460;
     border-top: 3px solid #f0c040;
     border-radius: 0 0 8px 8px;
     padding: 1.2rem 1.4rem;
@@ -114,45 +114,45 @@
     display: grid; grid-template-columns: 1fr auto;
     gap: 0.2rem 0.8rem; margin-bottom: 0.4rem;
     padding-bottom: 0.8rem;
-    border-bottom: 1px solid #1c1c38;
+    border-bottom: 1px solid #2e2e52;
   }
-  .sl { color: #555; font-size: 0.76rem; align-self: center; }
-  .sv { font-size: 0.82rem; text-align: right; font-weight: bold; color: #d8d8ec; }
-  .sv.gold   { color: #f0c040; }
-  .sv.green  { color: #4caf50; }
-  .sv.red    { color: #ef5350; }
-  .sv.purple { color: #d060f0; }
-  .sv.blue   { color: #6090f0; }
-  .sv.orange { color: #ff8040; }
+  .sl { color: #8a8aaa; font-size: 0.76rem; align-self: center; }
+  .sv { font-size: 0.82rem; text-align: right; font-weight: bold; color: #eeeef8; }
+  .sv.gold   { color: #ffd040; }
+  .sv.green  { color: #60d860; }
+  .sv.red    { color: #ff6860; }
+  .sv.purple { color: #e87aff; }
+  .sv.blue   { color: #80b4ff; }
+  .sv.orange { color: #ffaa55; }
 
   .sect {
-    color: #444; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #6a6a90; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
     margin: 1rem 0 0.5rem;
     display: flex; align-items: center; gap: 0.5rem;
   }
-  .sect::after { content: ''; flex: 1; height: 1px; background: #1c1c38; }
+  .sect::after { content: ''; flex: 1; height: 1px; background: #2e2e52; }
 
   /* ── Loot bars ───────────────────────────────────── */
   .loot-bar { margin: 5px 0; }
   .loot-label {
-    color: #555; font-size: 0.72rem; margin-bottom: 3px;
+    color: #8a8aaa; font-size: 0.72rem; margin-bottom: 3px;
     display: flex; justify-content: space-between;
   }
-  .loot-label span { color: #888; }
-  .loot-track { height: 10px; background: #080818; border-radius: 3px; overflow: hidden; }
+  .loot-label span { color: #b0b0cc; }
+  .loot-track { height: 10px; background: #0e0e20; border-radius: 3px; overflow: hidden; }
   .loot-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
-  .loot-fill.common   { background: #3a3a5a; }
-  .loot-fill.uncommon { background: #2e5030; }
-  .loot-fill.rare     { background: #1a2e60; }
-  .loot-fill.legendary{ background: linear-gradient(90deg, #5a1a00, #f0c040); }
+  .loot-fill.common   { background: #50507e; }
+  .loot-fill.uncommon { background: #3a6e40; }
+  .loot-fill.rare     { background: #2840a0; }
+  .loot-fill.legendary{ background: linear-gradient(90deg, #8a2800, #ffd040); }
 
   /* ── Theme info ──────────────────────────────────── */
-  .theme-info { font-size: 0.75rem; color: #555; line-height: 1.8; }
-  .theme-info b { color: #888; }
+  .theme-info { font-size: 0.75rem; color: #8a8aaa; line-height: 1.8; }
+  .theme-info b { color: #b0b0cc; }
 
   /* ── Legend ──────────────────────────────────────── */
   .legend {
-    background: #0c0c20; border: 1px solid #252545;
+    background: #0e0e24; border: 1px solid #343460;
     border-radius: 6px; padding: 1rem 1.2rem;
     margin-top: 0;
   }
@@ -162,13 +162,13 @@
   }
   .legend-section:last-child { margin-bottom: 0; }
   .legend-head {
-    color: #444; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #6a6a90; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
     display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem;
   }
-  .legend-head::after { content: ''; flex: 1; height: 1px; background: #1c1c38; }
+  .legend-head::after { content: ''; flex: 1; height: 1px; background: #2e2e52; }
   .leg-item {
     display: flex; align-items: flex-start; gap: 0.5rem;
-    color: #555; min-width: 160px; line-height: 1.3;
+    color: #8a8aaa; min-width: 160px; line-height: 1.3;
   }
   .leg-icon {
     display: flex; align-items: center; justify-content: center; gap: 1px;
@@ -176,15 +176,15 @@
   }
   .leg-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
   .leg-marker { font-size: 0.7rem; }
-  .leg-text b { color: #888; display: block; }
-  .leg-text span { color: #3a3a5a; font-size: 0.68rem; }
+  .leg-text b { color: #c0c0de; display: block; }
+  .leg-text span { color: #686888; font-size: 0.68rem; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Glückritter Inc — Dungeon Creator</h1>
-  <p class="subtitle">BSP generator · tile map</p>
+  <p class="subtitle">BSP · Drunk-walk + CA · tile map</p>
 </header>
 
 <div class="rule-box" id="themeBox">
@@ -227,6 +227,7 @@
   <div class="panel">
     <h2>Stats</h2>
     <div class="stat-grid">
+      <span class="sl">Algorithm</span>      <span class="sv"      id="statAlgorithm">—</span>
       <span class="sl">Grid</span>           <span class="sv"      id="statGrid">—</span>
       <span class="sl">Rooms</span>          <span class="sv"      id="statRooms">—</span>
       <span class="sl">Enemy spawns</span>   <span class="sv red"   id="statEnemies">—</span>
@@ -266,7 +267,7 @@
   <div class="legend-head">tiles</div>
   <div class="legend-section">
     <div class="leg-item">
-      <div class="leg-icon"><div class="leg-swatch" style="background:#07070e;border:1px solid #252545"></div></div>
+      <div class="leg-icon"><div class="leg-swatch" style="background:#07070e;border:1px solid #343460"></div></div>
       <div class="leg-text"><b>Wall</b><span>Impassable</span></div>
     </div>
     <div class="leg-item">
@@ -349,16 +350,16 @@ const T = {
 
 // ── Theme definitions ─────────────────────────────────────────
 const THEMES = [
-  { id:'crypt',    name:'Crypt',             floor:'#1a1428', enemies:'Undead, cultists',       traps:'Poison darts, cursed tiles',        loot:'Jewellery, relics',              hasTrap:true  },
-  { id:'bandit',   name:'Bandit Den',        floor:'#1c160e', enemies:'Humanoids, rogues',      traps:'Alarm tripwires, pit traps',        loot:'Coin, stolen goods',             hasTrap:true  },
-  { id:'beast',    name:'Beast Lair',        floor:'#0e1a0e', enemies:'Animals, monsters',      traps:'None (raw danger)',                 loot:'Pelts, monster parts',           hasTrap:false },
-  { id:'ruins',    name:'Ruins',             floor:'#181818', enemies:'Constructs, spirits',    traps:'Collapsing floors',                 loot:'Ancient artefacts',              hasTrap:true  },
-  { id:'sewer',    name:'Sewer',             floor:'#0d1a0e', enemies:'Rats, thieves guild',    traps:'Acid pools, flooding',              loot:'Keys, documents',                hasTrap:true  },
-  { id:'dragon',   name:'Dragon Hoard',      floor:'#1c1000', enemies:'Drakes, dragonkin',      traps:'Fire vents, magical wards',         loot:'Gold, legendary weapons',        hasTrap:true  },
-  { id:'forest',   name:'Forest',            floor:'#0a1a0a', enemies:'Druids, fey, beasts',   traps:'Snares, pitfalls, poisoned thorns', loot:'Herbs, fey tokens, rare pelts',  hasTrap:true  },
-  { id:'prison',   name:'Prison',            floor:'#141414', enemies:'Guards, prisoners',      traps:'Barred doors, alarm bells',         loot:'Weapons, confiscated gear',      hasTrap:true  },
-  { id:'fortress', name:'Fortress',          floor:'#101018', enemies:'Soldiers, knights',      traps:'Arrow slits, portcullises',         loot:'Military gear, war chest',       hasTrap:true  },
-  { id:'village',  name:'Abandoned Village', floor:'#141210', enemies:'Bandits, cultists',      traps:'Hidden cellars, cursed objects',    loot:'Household valuables, coin',      hasTrap:true  },
+  { id:'crypt',    name:'Crypt',             floor:'#382a54', enemies:'Undead, cultists',       traps:'Poison darts, cursed tiles',        loot:'Jewellery, relics',              hasTrap:true  },
+  { id:'bandit',   name:'Bandit Den',        floor:'#382a18', enemies:'Humanoids, rogues',      traps:'Alarm tripwires, pit traps',        loot:'Coin, stolen goods',             hasTrap:true  },
+  { id:'beast',    name:'Beast Lair',        floor:'#203820', enemies:'Animals, monsters',      traps:'None (raw danger)',                 loot:'Pelts, monster parts',           hasTrap:false },
+  { id:'ruins',    name:'Ruins',             floor:'#363636', enemies:'Constructs, spirits',    traps:'Collapsing floors',                 loot:'Ancient artefacts',              hasTrap:true  },
+  { id:'sewer',    name:'Sewer',             floor:'#1e3620', enemies:'Rats, thieves guild',    traps:'Acid pools, flooding',              loot:'Keys, documents',                hasTrap:true  },
+  { id:'dragon',   name:'Dragon Hoard',      floor:'#382200', enemies:'Drakes, dragonkin',      traps:'Fire vents, magical wards',         loot:'Gold, legendary weapons',        hasTrap:true  },
+  { id:'forest',   name:'Forest',            floor:'#1c3818', enemies:'Druids, fey, beasts',   traps:'Snares, pitfalls, poisoned thorns', loot:'Herbs, fey tokens, rare pelts',  hasTrap:true  },
+  { id:'prison',   name:'Prison',            floor:'#303030', enemies:'Guards, prisoners',      traps:'Barred doors, alarm bells',         loot:'Weapons, confiscated gear',      hasTrap:true  },
+  { id:'fortress', name:'Fortress',          floor:'#24243e', enemies:'Soldiers, knights',      traps:'Arrow slits, portcullises',         loot:'Military gear, war chest',       hasTrap:true  },
+  { id:'village',  name:'Abandoned Village', floor:'#302820', enemies:'Bandits, cultists',      traps:'Hidden cellars, cursed objects',    loot:'Household valuables, coin',      hasTrap:true  },
 ];
 
 // ── Map size tile-count ranges ────────────────────────────────
@@ -386,25 +387,25 @@ function pickDimensions(sizeKey, rng) {
 // ── Tile colors & markers ─────────────────────────────────────
 const TILE_BG = {
   [T.WALL]:     '#07070e',
-  [T.FLOOR]:    '#1e1e3a',  // overridden per theme
-  [T.DOOR]:     '#7a4f1a',
-  [T.TRAP]:     '#4a0000',
-  [T.TREASURE]: '#3a2e00',
-  [T.ENEMY]:    '#200830',
-  [T.BOSS]:     '#2a0050',
-  [T.ENTRY]:    '#002a00',
-  [T.EXIT]:     '#00002a',
-  [T.HAZARD]:   '#2a1000',
+  [T.FLOOR]:    '#2a2a50',  // overridden per theme
+  [T.DOOR]:     '#9a6820',
+  [T.TRAP]:     '#780000',
+  [T.TREASURE]: '#584400',
+  [T.ENEMY]:    '#380c54',
+  [T.BOSS]:     '#44007c',
+  [T.ENTRY]:    '#004800',
+  [T.EXIT]:     '#000048',
+  [T.HAZARD]:   '#4a1c00',
 };
 
 const TILE_MARK = {
-  [T.TRAP]:     { ch:'×', col:'#ef5350' },
-  [T.TREASURE]: { ch:'◆', col:'#f0c040' },
-  [T.ENEMY]:    { ch:'♦', col:'#ef5350' },
-  [T.BOSS]:     { ch:'★', col:'#d060f0' },
-  [T.ENTRY]:    { ch:'▲', col:'#4caf50' },
-  [T.EXIT]:     { ch:'▼', col:'#6090f0' },
-  [T.HAZARD]:   { ch:'!', col:'#ff8040' },
+  [T.TRAP]:     { ch:'×', col:'#ff6860' },
+  [T.TREASURE]: { ch:'◆', col:'#ffd040' },
+  [T.ENEMY]:    { ch:'♦', col:'#ff6860' },
+  [T.BOSS]:     { ch:'★', col:'#e87aff' },
+  [T.ENTRY]:    { ch:'▲', col:'#60d860' },
+  [T.EXIT]:     { ch:'▼', col:'#80b4ff' },
+  [T.HAZARD]:   { ch:'!', col:'#ffaa55' },
 };
 
 // ── Seeded PRNG (Mulberry32) ──────────────────────────────────
@@ -698,6 +699,250 @@ function generateDungeon(W, H, theme, rng, depth) {
   return { grid, rooms };
 }
 
+// ── Drunk-Walk + Cellular Automata Dungeon Generator ──────────
+function generateDungeonDrunkCA(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  const DIRS = [[0,-1],[0,1],[-1,0],[1,0]];
+
+  // ── Phase 1: Drunk Walk ──────────────────────────────────────
+  const targetFloor = Math.floor(W * H * 0.42);
+  let floorCount = 0;
+  const walkers = [{ x: Math.floor(W / 2), y: Math.floor(H / 2) }];
+
+  while (floorCount < targetFloor) {
+    for (const w of walkers) {
+      const [dx, dy] = DIRS[Math.floor(rng() * 4)];
+      const nx = w.x + dx, ny = w.y + dy;
+      if (nx > 0 && nx < W - 1 && ny > 0 && ny < H - 1) {
+        w.x = nx; w.y = ny;
+        if (gget(nx, ny) !== T.FLOOR) { gset(nx, ny, T.FLOOR); floorCount++; }
+      }
+    }
+    if (walkers.length < 4 && rng() < 0.005 && floorCount < targetFloor) {
+      const src = walkers[Math.floor(rng() * walkers.length)];
+      walkers.push({ x: src.x, y: src.y });
+    }
+  }
+
+  // ── Phase 2: Cellular Automata Smoothing (4 passes) ─────────
+  for (let iter = 0; iter < 4; iter++) {
+    const next = new Uint8Array(W * H);
+    for (let y = 1; y < H - 1; y++) {
+      for (let x = 1; x < W - 1; x++) {
+        let n = 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            if (gget(x + dx, y + dy) === T.FLOOR) n++;
+          }
+        const wasFloor = gget(x, y) === T.FLOOR;
+        next[y * W + x] = (wasFloor ? n >= 4 : n >= 5) ? T.FLOOR : T.WALL;
+      }
+    }
+    grid.set(next);
+  }
+
+  // ── Phase 3: Keep Largest Connected Component ────────────────
+  function flood(sx, sy) {
+    if (gget(sx, sy) !== T.FLOOR) return [];
+    const cells = [], seen = new Uint8Array(W * H);
+    const q = [[sx, sy]]; seen[sy * W + sx] = 1;
+    while (q.length) {
+      const [x, y] = q.pop(); cells.push([x, y]);
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && !seen[ny*W+nx] && gget(nx,ny) === T.FLOOR) {
+          seen[ny*W+nx] = 1; q.push([nx, ny]);
+        }
+      }
+    }
+    return cells;
+  }
+
+  let largest = [];
+  const visited = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (gget(x, y) === T.FLOOR && !visited[y*W+x]) {
+        const region = flood(x, y);
+        for (const [rx, ry] of region) visited[ry*W+rx] = 1;
+        if (region.length > largest.length) largest = region;
+      }
+
+  for (let i = 0; i < grid.length; i++) if (grid[i] === T.FLOOR) grid[i] = T.WALL;
+  for (const [x, y] of largest) gset(x, y, T.FLOOR);
+
+  if (largest.length === 0) return { grid, rooms: [] };
+
+  // ── Phase 4: Identify Rooms via Openness Local Maxima ────────
+  // Score = floor count in 5×5 neighbourhood
+  const openness = new Float32Array(W * H);
+  for (const [cx, cy] of largest) {
+    let score = 0;
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) {
+        const nx = cx+dx, ny = cy+dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && gget(nx,ny) === T.FLOOR) score++;
+      }
+    openness[cy * W + cx] = score;
+  }
+
+  const MIN_ROOM_DIST = 8;
+  const roomSeeds = [];
+  const sorted = [...largest].sort((a, b) => openness[b[1]*W+b[0]] - openness[a[1]*W+a[0]]);
+  const taken = new Uint8Array(W * H);
+
+  for (const [sx, sy] of sorted) {
+    if (taken[sy*W+sx] || openness[sy*W+sx] < 9) continue;
+    roomSeeds.push([sx, sy]);
+    for (let dy = -MIN_ROOM_DIST; dy <= MIN_ROOM_DIST; dy++)
+      for (let dx = -MIN_ROOM_DIST; dx <= MIN_ROOM_DIST; dx++) {
+        const nx = sx+dx, ny = sy+dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H) taken[ny*W+nx] = 1;
+      }
+  }
+
+  if (roomSeeds.length === 0) return { grid, rooms: [] };
+
+  // Voronoi-assign each floor cell to nearest seed (Manhattan)
+  const assignment = new Int32Array(W * H).fill(-1);
+  for (const [x, y] of largest) {
+    let best = 0, bestDist = Infinity;
+    for (let i = 0; i < roomSeeds.length; i++) {
+      const d = Math.abs(x - roomSeeds[i][0]) + Math.abs(y - roomSeeds[i][1]);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    assignment[y*W+x] = best;
+  }
+
+  const roomCells = roomSeeds.map(() => []);
+  for (const [x, y] of largest) {
+    const ri = assignment[y*W+x];
+    if (ri >= 0) roomCells[ri].push([x, y]);
+  }
+
+  const rooms = roomSeeds.map(([cx, cy], i) => {
+    const cells = roomCells[i];
+    let minX = cx, maxX = cx, minY = cy, maxY = cy;
+    for (const [x, y] of cells) {
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    return { cx, cy, x: minX, y: minY, w: maxX-minX+1, h: maxY-minY+1,
+             area: cells.length, cells, role: 'chamber' };
+  });
+
+  // ── Phase 5: Assign Roles ────────────────────────────────────
+  rooms.sort((a, b) => a.cx - b.cx);
+  const entryRoom = rooms[0];
+
+  let exitRoom = rooms[rooms.length - 1], maxDist = 0;
+  for (const r of rooms) {
+    const d = Math.abs(r.cx - entryRoom.cx) + Math.abs(r.cy - entryRoom.cy);
+    if (d > maxDist) { maxDist = d; exitRoom = r; }
+  }
+
+  let bossRoom = null, minDist = Infinity;
+  for (const r of rooms) {
+    if (r === exitRoom) continue;
+    const d = Math.abs(r.cx - exitRoom.cx) + Math.abs(r.cy - exitRoom.cy);
+    if (d < minDist) { minDist = d; bossRoom = r; }
+  }
+  if (!bossRoom) bossRoom = entryRoom;
+
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.area <= 20)    r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function roomFloor(r) {
+    return r.cells.filter(([x, y]) => gget(x, y) === T.FLOOR);
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Boss Guards ──────────────────────────────────────────────
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  // ── Enemy Groups ─────────────────────────────────────────────
+  const eligible = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  // ── Treasure ─────────────────────────────────────────────────
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  // ── Traps ────────────────────────────────────────────────────
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  return { grid, rooms };
+}
+
 // ── Canvas renderer ───────────────────────────────────────────
 function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
   canvas.width  = W * px;
@@ -732,7 +977,7 @@ function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
                        vault:'VAULT', barracks:'BRCKS', passage:'PASS' };
     ctx.font = `${Math.max(7, px - 6)}px 'Courier New', monospace`;
     for (const r of rooms) {
-      if (r.w * r.h < 25) continue;
+      if ((r.area ?? r.w * r.h) < 25) continue;
       const lbl = labelMap[r.role];
       if (!lbl) continue;
       const alpha = (r.role === 'boss' || r.role === 'entry' || r.role === 'exit') ? 0.9 : 0.35;
@@ -801,7 +1046,10 @@ function generate() {
   const rng  = makePRNG(seed);
 
   const { W, H, px, depth } = pickDimensions(sizeKey, rng);
-  const { grid, rooms } = generateDungeon(W, H, theme, rng, depth);
+  const useCA = (theme.id === 'beast' || theme.id === 'forest');
+  const { grid, rooms } = useCA
+    ? generateDungeonDrunkCA(W, H, theme, rng)
+    : generateDungeon(W, H, theme, rng, depth);
   const canvas = document.getElementById('dungeonCanvas');
   renderDungeon(canvas, grid, rooms, W, H, px, theme);
 
@@ -809,6 +1057,7 @@ function generate() {
   const counts = {};
   for (const t of grid) counts[t] = (counts[t] || 0) + 1;
 
+  document.getElementById('statAlgorithm').textContent = useCA ? 'Drunk-walk + CA' : 'BSP';
   document.getElementById('statGrid').textContent     = `${W} × ${H}`;
   document.getElementById('statRooms').textContent    = rooms.length;
   document.getElementById('statEnemies').textContent  = counts[T.ENEMY]    || 0;
