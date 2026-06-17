@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Glückritter Inc — Dungeon Creator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: linear-gradient(160deg, #0a0a18 0%, #131328 60%, #0f1020 100%);
+    min-height: 100vh;
+    color: #d8d8ec;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 2.5rem 2rem 3rem;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  header { margin-bottom: 2rem; }
+  h1 {
+    font-size: 1.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #f0c040;
+    text-shadow: 0 0 24px rgba(240,192,64,0.35);
+    margin-bottom: 0.2rem;
+  }
+  p.subtitle { color: #777; font-size: 0.8rem; letter-spacing: 0.05em; }
+
+  /* ── Theme rule box ──────────────────────────────── */
+  .rule-box {
+    background: #0e0e24; border: 1px solid #343460;
+    border-left: 3px solid #f0c040;
+    border-radius: 0 6px 6px 0;
+    padding: 0.85rem 1.2rem; margin-bottom: 1.8rem;
+    font-size: 0.8rem;
+  }
+  .rule-box .theme-name {
+    color: #f0c040; font-weight: bold; font-size: 0.9rem;
+    margin-bottom: 0.35rem; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .rule-row { color: #8a8aaa; line-height: 1.8; }
+  .rule-row b { color: #c0c0e0; }
+
+  /* ── Controls ────────────────────────────────────── */
+  .controls {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 2rem; align-items: flex-end;
+    background: #0e0e24; border: 1px solid #343460;
+    border-radius: 6px; padding: 0.9rem 1.1rem;
+  }
+  .ctrl-group { display: flex; flex-direction: column; gap: 0.3rem; }
+  label { font-size: 0.72rem; color: #777; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  select, input[type=number] {
+    background: #08081a; border: 1px solid #353560;
+    color: #f0c040; padding: 0.4rem 0.6rem;
+    font-family: inherit; font-size: 0.9rem; border-radius: 4px;
+    outline: none; transition: border-color 0.15s;
+  }
+  select { min-width: 170px; cursor: pointer; }
+  input[type=number] { width: 90px; }
+  select:focus, input[type=number]:focus { border-color: #f0c040; }
+
+  button {
+    background: #f0c040; color: #08081a; border: none;
+    padding: 0.5rem 1.6rem; font-family: inherit; font-size: 0.95rem;
+    font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer; border-radius: 4px;
+    box-shadow: 0 0 12px rgba(240,192,64,0.25);
+    transition: background 0.12s, box-shadow 0.12s;
+  }
+  button:hover { background: #ffd060; box-shadow: 0 0 20px rgba(240,192,64,0.45); }
+  button:active { background: #d4a820; }
+
+  button.secondary {
+    background: transparent; color: #666;
+    border: 1px solid #353560; box-shadow: none;
+    padding: 0.5rem 1rem; font-size: 0.8rem;
+  }
+  button.secondary:hover { background: #13132c; color: #aaa; box-shadow: none; }
+
+  /* ── Main layout ─────────────────────────────────── */
+  .main-area {
+    display: flex; gap: 1.2rem; align-items: flex-start;
+    flex-wrap: wrap; margin-bottom: 1.8rem;
+  }
+
+  /* ── Canvas ──────────────────────────────────────── */
+  .canvas-wrap {
+    background: #07070e;
+    border: 1px solid #343460;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  canvas { display: block; }
+
+  /* ── Stats panel ─────────────────────────────────── */
+  .panel {
+    background: #0e0e24;
+    border: 1px solid #343460;
+    border-top: 3px solid #f0c040;
+    border-radius: 0 0 8px 8px;
+    padding: 1.2rem 1.4rem;
+    min-width: 230px;
+    flex: 1;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .panel h2 {
+    color: #f0c040; font-size: 1.05rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .stat-grid {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 0.2rem 0.8rem; margin-bottom: 0.4rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #2e2e52;
+  }
+  .sl { color: #8a8aaa; font-size: 0.76rem; align-self: center; }
+  .sv { font-size: 0.82rem; text-align: right; font-weight: bold; color: #eeeef8; }
+  .sv.gold   { color: #ffd040; }
+  .sv.green  { color: #60d860; }
+  .sv.red    { color: #ff6860; }
+  .sv.purple { color: #e87aff; }
+  .sv.blue   { color: #80b4ff; }
+  .sv.orange { color: #ffaa55; }
+
+  .sect {
+    color: #6a6a90; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    margin: 1rem 0 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .sect::after { content: ''; flex: 1; height: 1px; background: #2e2e52; }
+
+  /* ── Loot bars ───────────────────────────────────── */
+  .loot-bar { margin: 5px 0; }
+  .loot-label {
+    color: #8a8aaa; font-size: 0.72rem; margin-bottom: 3px;
+    display: flex; justify-content: space-between;
+  }
+  .loot-label span { color: #b0b0cc; }
+  .loot-track { height: 10px; background: #0e0e20; border-radius: 3px; overflow: hidden; }
+  .loot-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+  .loot-fill.common   { background: #50507e; }
+  .loot-fill.uncommon { background: #3a6e40; }
+  .loot-fill.rare     { background: #2840a0; }
+  .loot-fill.legendary{ background: linear-gradient(90deg, #8a2800, #ffd040); }
+
+  /* ── Theme info ──────────────────────────────────── */
+  .theme-info { font-size: 0.75rem; color: #8a8aaa; line-height: 1.8; }
+  .theme-info b { color: #b0b0cc; }
+
+  /* ── Legend ──────────────────────────────────────── */
+  .legend {
+    background: #0e0e24; border: 1px solid #343460;
+    border-radius: 6px; padding: 1rem 1.2rem;
+    margin-top: 0;
+  }
+  .legend-section {
+    display: flex; gap: 0.5rem 1.4rem; flex-wrap: wrap;
+    font-size: 0.74rem; margin-bottom: 0.4rem;
+  }
+  .legend-section:last-child { margin-bottom: 0; }
+  .legend-head {
+    color: #6a6a90; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem;
+  }
+  .legend-head::after { content: ''; flex: 1; height: 1px; background: #2e2e52; }
+  .leg-item {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    color: #8a8aaa; min-width: 160px; line-height: 1.3;
+  }
+  .leg-icon {
+    display: flex; align-items: center; justify-content: center; gap: 1px;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .leg-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+  .leg-marker { font-size: 0.7rem; }
+  .leg-text b { color: #c0c0de; display: block; }
+  .leg-text span { color: #686888; font-size: 0.68rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Glückritter Inc — Dungeon Creator</h1>
+  <p class="subtitle">BSP · Drunk-walk + CA · Grid Tunnel · Hub &amp; Spoke · Scatter · Cell Block · tile map</p>
+</header>
+
+<div class="rule-box" id="themeBox">
+  <div class="theme-name" id="themeTitle">—</div>
+  <div class="rule-row"><b>Enemies:</b> <span id="themeEnemies">—</span></div>
+  <div class="rule-row"><b>Traps:</b> <span id="themeTraps">—</span></div>
+  <div class="rule-row"><b>Loot focus:</b> <span id="themeLoot">—</span></div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Theme</label>
+    <select id="themeSelect" onchange="updateThemeBox()"></select>
+  </div>
+  <div class="ctrl-group">
+    <label>Size</label>
+    <select id="sizeSelect">
+      <option value="small">Small  (4 500 – 6 500 tiles)</option>
+      <option value="medium" selected>Medium (6 500 – 9 000 tiles)</option>
+      <option value="large">Large  (9 000 – 15 000 tiles)</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Danger Level</label>
+    <input type="number" id="dangerLevel" value="5" min="1" max="100">
+  </div>
+  <div class="ctrl-group">
+    <label>Seed</label>
+    <input type="number" id="seedInput" value="42" min="0" max="9999999">
+  </div>
+  <button onclick="generate()">Generate</button>
+  <button class="secondary" onclick="randomSeed()">Random Seed</button>
+</div>
+
+<div class="main-area">
+  <div class="canvas-wrap">
+    <canvas id="dungeonCanvas"></canvas>
+  </div>
+
+  <div class="panel">
+    <h2>Stats</h2>
+    <div class="stat-grid">
+      <span class="sl">Algorithm</span>      <span class="sv"      id="statAlgorithm">—</span>
+      <span class="sl">Grid</span>           <span class="sv"      id="statGrid">—</span>
+      <span class="sl">Rooms</span>          <span class="sv"      id="statRooms">—</span>
+      <span class="sl">Enemy spawns</span>   <span class="sv red"   id="statEnemies">—</span>
+      <span class="sl">Boss</span>           <span class="sv purple" id="statBoss">—</span>
+      <span class="sl">Traps</span>          <span class="sv orange" id="statTraps">—</span>
+      <span class="sl">Treasure tiles</span><span class="sv gold"   id="statTreasure">—</span>
+      <span class="sl">Hazards</span>        <span class="sv orange" id="statHazards">—</span>
+      <span class="sl">Doors</span>          <span class="sv"        id="statDoors">—</span>
+      <span class="sl">Floor tiles</span>   <span class="sv"        id="statFloor">—</span>
+    </div>
+
+    <div class="sect">loot table</div>
+
+    <div class="loot-bar">
+      <div class="loot-label">Common <span id="pctCommon">—</span></div>
+      <div class="loot-track"><div class="loot-fill common"    id="barCommon"    style="width:0%"></div></div>
+    </div>
+    <div class="loot-bar">
+      <div class="loot-label">Uncommon <span id="pctUncommon">—</span></div>
+      <div class="loot-track"><div class="loot-fill uncommon"  id="barUncommon"  style="width:0%"></div></div>
+    </div>
+    <div class="loot-bar">
+      <div class="loot-label">Rare <span id="pctRare">—</span></div>
+      <div class="loot-track"><div class="loot-fill rare"      id="barRare"      style="width:0%"></div></div>
+    </div>
+    <div class="loot-bar">
+      <div class="loot-label">Legendary <span id="pctLegendary">—</span></div>
+      <div class="loot-track"><div class="loot-fill legendary" id="barLegendary" style="width:0%"></div></div>
+    </div>
+
+    <div class="sect">theme</div>
+    <div class="theme-info" id="themeInfoPanel">—</div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-head">tiles</div>
+  <div class="legend-section">
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#07070e;border:1px solid #343460"></div></div>
+      <div class="leg-text"><b>Wall</b><span>Impassable</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#1e1e3a"></div></div>
+      <div class="leg-text"><b>Floor</b><span>Passable — tint varies by theme</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#7a4f1a"></div></div>
+      <div class="leg-text"><b>Door</b><span>Lockpick / force / key required</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#4a0000"></div><span class="leg-marker" style="color:#ef5350">×</span></div>
+      <div class="leg-text"><b>Trap</b><span>Hidden — DEX/SMA check to spot</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#3a2e00"></div><span class="leg-marker" style="color:#f0c040">◆</span></div>
+      <div class="leg-text"><b>Treasure</b><span>Contains loot — may be guarded</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#200830"></div><span class="leg-marker" style="color:#ef5350">♦</span></div>
+      <div class="leg-text"><b>Enemy</b><span>Hostile encounter, scales with DL</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#2a0050"></div><span class="leg-marker" style="color:#d060f0">★</span></div>
+      <div class="leg-text"><b>Boss</b><span>Scripted encounter — always on critical path</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#002a00"></div><span class="leg-marker" style="color:#4caf50">▲</span></div>
+      <div class="leg-text"><b>Entry</b><span>Party starts here</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#00002a"></div><span class="leg-marker" style="color:#6090f0">▼</span></div>
+      <div class="leg-text"><b>Exit</b><span>Farthest point from Entry — escape here</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon"><div class="leg-swatch" style="background:#2a1000"></div><span class="leg-marker" style="color:#ff8040">!</span></div>
+      <div class="leg-text"><b>Hazard</b><span>Environmental danger (pit, acid, collapse)</span></div>
+    </div>
+  </div>
+
+  <div class="legend-head" style="margin-top:0.9rem">room roles</div>
+  <div class="legend-section">
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#4caf50;font-size:0.7rem;width:14px;text-align:center">▲</div>
+      <div class="leg-text"><b>Entry</b><span>Starting room — leftmost by placement</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#6090f0;font-size:0.7rem;width:14px;text-align:center">▼</div>
+      <div class="leg-text"><b>Exit</b><span>Goal — farthest room from Entry</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#d060f0;font-size:0.7rem;width:14px;text-align:center">★</div>
+      <div class="leg-text"><b>Boss (BOSS)</b><span>Near Exit — guarded boss encounter</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#f0c040;font-size:0.65rem;width:14px;text-align:center">◆</div>
+      <div class="leg-text"><b>Vault (VAULT)</b><span>Dense treasure tiles — high loot room</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#ef5350;font-size:0.7rem;width:14px;text-align:center">♦</div>
+      <div class="leg-text"><b>Barracks (BRCKS)</b><span>Dense enemy spawns</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#555;font-size:0.65rem;width:14px;text-align:center">·</div>
+      <div class="leg-text"><b>Chamber</b><span>Open space — light encounters, tactical options</span></div>
+    </div>
+    <div class="leg-item">
+      <div class="leg-icon" style="color:#ff8040;font-size:0.7rem;width:14px;text-align:center">!</div>
+      <div class="leg-text"><b>Passage (PASS)</b><span>Narrow connector — trap &amp; hazard risk</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tile type constants ───────────────────────────────────────
+const T = {
+  WALL:0, FLOOR:1, DOOR:2, TRAP:3, TREASURE:4,
+  ENEMY:5, BOSS:6, ENTRY:7, EXIT:8, HAZARD:9
+};
+
+// ── Theme definitions ─────────────────────────────────────────
+const THEMES = [
+  { id:'crypt',    name:'Crypt',             floor:'#382a54', enemies:'Undead, cultists',       traps:'Poison darts, cursed tiles',        loot:'Jewellery, relics',              hasTrap:true  },
+  { id:'bandit',   name:'Bandit Den',        floor:'#382a18', enemies:'Humanoids, rogues',      traps:'Alarm tripwires, pit traps',        loot:'Coin, stolen goods',             hasTrap:true  },
+  { id:'beast',    name:'Beast Lair',        floor:'#203820', enemies:'Animals, monsters',      traps:'None (raw danger)',                 loot:'Pelts, monster parts',           hasTrap:false },
+  { id:'ruins',    name:'Ruins',             floor:'#363636', enemies:'Constructs, spirits',    traps:'Collapsing floors',                 loot:'Ancient artefacts',              hasTrap:true  },
+  { id:'sewer',    name:'Sewer',             floor:'#1e3620', enemies:'Rats, thieves guild',    traps:'Acid pools, flooding',              loot:'Keys, documents',                hasTrap:true  },
+  { id:'dragon',   name:'Dragon Hoard',      floor:'#382200', enemies:'Drakes, dragonkin',      traps:'Fire vents, magical wards',         loot:'Gold, legendary weapons',        hasTrap:true  },
+  { id:'forest',   name:'Forest',            floor:'#1c3818', enemies:'Druids, fey, beasts',   traps:'Snares, pitfalls, poisoned thorns', loot:'Herbs, fey tokens, rare pelts',  hasTrap:true  },
+  { id:'prison',   name:'Prison',            floor:'#303030', enemies:'Guards, prisoners',      traps:'Barred doors, alarm bells',         loot:'Weapons, confiscated gear',      hasTrap:true  },
+  { id:'fortress', name:'Fortress',          floor:'#24243e', enemies:'Soldiers, knights',      traps:'Arrow slits, portcullises',         loot:'Military gear, war chest',       hasTrap:true  },
+  { id:'village',  name:'Abandoned Village', floor:'#302820', enemies:'Bandits, cultists',      traps:'Hidden cellars, cursed objects',    loot:'Household valuables, coin',      hasTrap:true  },
+];
+
+// ── Map size tile-count ranges ────────────────────────────────
+const SIZE_RANGES = {
+  small:  [4500,  6500],
+  medium: [6500,  9000],
+  large:  [9000, 15000],
+};
+
+// Pick W, H, px and BSP depth from size category + seeded rng.
+// Aspect ratio is random 1:1 – 2.5:1, orientation random.
+function pickDimensions(sizeKey, rng) {
+  const [lo, hi] = SIZE_RANGES[sizeKey];
+  const T         = lo + Math.floor(rng() * (hi - lo));   // total tiles
+  const ratio     = 1.0 + rng() * 1.5;                    // 1.0 – 2.5
+  const landscape = rng() < 0.5;
+  const r         = landscape ? ratio : 1 / ratio;         // r = W/H
+  const W  = Math.max(20, Math.round(Math.sqrt(T * r)));
+  const H  = Math.max(20, Math.round(Math.sqrt(T / r)));
+  const px = Math.max(5, Math.min(12, Math.floor(1100 / W), Math.floor(750 / H)));
+  const depth = T > 7500 ? 6 : 5;
+  return { W, H, px, depth };
+}
+
+// ── Tile colors & markers ─────────────────────────────────────
+const TILE_BG = {
+  [T.WALL]:     '#07070e',
+  [T.FLOOR]:    '#2a2a50',  // overridden per theme
+  [T.DOOR]:     '#9a6820',
+  [T.TRAP]:     '#780000',
+  [T.TREASURE]: '#584400',
+  [T.ENEMY]:    '#380c54',
+  [T.BOSS]:     '#44007c',
+  [T.ENTRY]:    '#004800',
+  [T.EXIT]:     '#000048',
+  [T.HAZARD]:   '#4a1c00',
+};
+
+const TILE_MARK = {
+  [T.TRAP]:     { ch:'×', col:'#ff6860' },
+  [T.TREASURE]: { ch:'◆', col:'#ffd040' },
+  [T.ENEMY]:    { ch:'♦', col:'#ff6860' },
+  [T.BOSS]:     { ch:'★', col:'#e87aff' },
+  [T.ENTRY]:    { ch:'▲', col:'#60d860' },
+  [T.EXIT]:     { ch:'▼', col:'#80b4ff' },
+  [T.HAZARD]:   { ch:'!', col:'#ffaa55' },
+};
+
+// ── Seeded PRNG (Mulberry32) ──────────────────────────────────
+function makePRNG(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ── BSP Dungeon Generator ─────────────────────────────────────
+function generateDungeon(W, H, theme, rng, depth) {
+  const grid  = new Uint8Array(W * H);  // all zeros = WALL
+  const rooms = [];
+
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  function carveRect(x, y, w, h) {
+    for (let dy = 0; dy < h; dy++)
+      for (let dx = 0; dx < w; dx++)
+        gset(x + dx, y + dy, T.FLOOR);
+  }
+
+  // 2-tile-wide L-shaped corridor; yo/xo pick which side expands
+  function carveWide(x0, y0, x1, y1) {
+    const hFirst = rng() < 0.5;
+    const yo = rng() < 0.5 ? 1 : -1;
+    const xo = rng() < 0.5 ? 1 : -1;
+    function hSeg(fx, tx, ay) {
+      const s = fx <= tx ? 1 : -1;
+      for (let x = fx; x !== tx + s; x += s) {
+        gset(x, ay, T.FLOOR);
+        const ny = ay + yo;
+        if (ny > 0 && ny < H - 1) gset(x, ny, T.FLOOR);
+      }
+    }
+    function vSeg(ax, fy, ty) {
+      const s = fy <= ty ? 1 : -1;
+      for (let y = fy; y !== ty + s; y += s) {
+        gset(ax, y, T.FLOOR);
+        const nx = ax + xo;
+        if (nx > 0 && nx < W - 1) gset(nx, y, T.FLOOR);
+      }
+    }
+    if (hFirst) { hSeg(x0, x1, y0); vSeg(x1, y0, y1); }
+    else        { vSeg(x0, y0, y1); hSeg(x0, x1, y1); }
+  }
+
+  const MIN_LEAF = 10;
+  const MIN_PAD  = 1;
+
+  function bsp(x, y, w, h, depth) {
+    const canSplitH = w >= MIN_LEAF * 2;
+    const canSplitV = h >= MIN_LEAF * 2;
+
+    if (depth === 0 || (!canSplitH && !canSplitV)) {
+      // Leaf: carve a room with padding
+      const pad = MIN_PAD + Math.floor(rng() * 2);
+      const rx  = x + pad;
+      const ry  = y + pad;
+      const rw  = Math.max(4, w - pad * 2 - Math.floor(rng() * 3));
+      const rh  = Math.max(4, h - pad * 2 - Math.floor(rng() * 3));
+      if (rx + rw >= W || ry + rh >= H) return null;
+      carveRect(rx, ry, rw, rh);
+      const room = {
+        x: rx, y: ry, w: rw, h: rh,
+        cx: rx + Math.floor(rw / 2),
+        cy: ry + Math.floor(rh / 2),
+        role: 'chamber'
+      };
+      rooms.push(room);
+      return room;
+    }
+
+    // Prefer to split along the longer axis; bias with some randomness
+    const splitH = canSplitH && (!canSplitV || rng() < (w > h ? 0.65 : 0.35));
+
+    let roomA, roomB;
+
+    if (splitH) {
+      const lo = x + MIN_LEAF;
+      const hi = x + w - MIN_LEAF;
+      if (lo >= hi) return bsp(x, y, w, h, 0);
+      const cut = lo + Math.floor(rng() * (hi - lo));
+      roomA = bsp(x,   y, cut - x,     h, depth - 1);
+      roomB = bsp(cut, y, x + w - cut, h, depth - 1);
+    } else {
+      const lo = y + MIN_LEAF;
+      const hi = y + h - MIN_LEAF;
+      if (lo >= hi) return bsp(x, y, w, h, 0);
+      const cut = lo + Math.floor(rng() * (hi - lo));
+      roomA = bsp(x, y,   w, cut - y,     depth - 1);
+      roomB = bsp(x, cut, w, y + h - cut, depth - 1);
+    }
+
+    // Connect children with a wide L-shaped corridor
+    if (roomA && roomB) carveWide(roomA.cx, roomA.cy, roomB.cx, roomB.cy);
+
+    return roomA || roomB;
+  }
+
+  bsp(1, 1, W - 2, H - 2, depth);
+
+  if (rooms.length === 0) return { grid, rooms };
+
+  // ── Place Entry (leftmost room) ───────────────────────────
+  rooms.sort((a, b) => a.cx - b.cx);
+  const entryRoom = rooms[0];
+
+  // ── Place Exit (farthest from Entry by Manhattan distance) ─
+  let exitRoom = rooms[rooms.length - 1];
+  let maxDist  = 0;
+  for (const r of rooms) {
+    const d = Math.abs(r.cx - entryRoom.cx) + Math.abs(r.cy - entryRoom.cy);
+    if (d > maxDist) { maxDist = d; exitRoom = r; }
+  }
+
+  // ── Boss room (nearest to Exit, not Exit itself) ───────────
+  let bossRoom = null;
+  let minDist  = Infinity;
+  for (const r of rooms) {
+    if (r === exitRoom) continue;
+    const d = Math.abs(r.cx - exitRoom.cx) + Math.abs(r.cy - exitRoom.cy);
+    if (d < minDist) { minDist = d; bossRoom = r; }
+  }
+
+  // ── Extra corridors: multiple paths to boss ──────────────
+  // Connect the 2–3 nearest rooms to boss with direct corridors
+  const nearBoss = rooms
+    .filter(r => r !== bossRoom)
+    .sort((a, b) =>
+      (Math.abs(a.cx - bossRoom.cx) + Math.abs(a.cy - bossRoom.cy)) -
+      (Math.abs(b.cx - bossRoom.cx) + Math.abs(b.cy - bossRoom.cy))
+    );
+  const extraBossPaths = 2 + Math.floor(rng() * 2);  // 2–3
+  for (let i = 0; i < Math.min(extraBossPaths, nearBoss.length); i++)
+    carveWide(nearBoss[i].cx, nearBoss[i].cy, bossRoom.cx, bossRoom.cy);
+
+  // ── Extra random corridors for general loopiness ──────────
+  const loopCount = 2 + Math.floor(rng() * 3);
+  const rshuf = shuffle([...rooms]);
+  for (let i = 0; i < Math.min(loopCount, rshuf.length - 1); i++)
+    carveWide(rshuf[i].cx, rshuf[i].cy, rshuf[i + 1].cx, rshuf[i + 1].cy);
+
+  // ── Assign room roles ─────────────────────────────────────
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.w * r.h <= 20) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  // ── Fixed anchor tiles ────────────────────────────────────
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Helpers ───────────────────────────────────────────────
+  // Collect floor tiles currently inside a room rectangle.
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+
+  // Place a single tile on a random floor spot in a room.
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+
+  // Place `count` tiles in a tight cluster anchored at a random floor tile.
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    // Sort by Manhattan distance from anchor, then take the closest `count`
+    f.sort((a, b) =>
+      (Math.abs(a[0]-ax) + Math.abs(a[1]-ay)) -
+      (Math.abs(b[0]-ax) + Math.abs(b[1]-ay))
+    );
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+
+  // Fisher-Yates shuffle using seeded rng.
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Boss guards: cluster tightly around the boss tile ────
+  const guardCount = 2 + Math.floor(rng() * 3); // 2–4
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  // ── Enemy groups: 3–5 groups, each 2–10 enemies, spread ─
+  const eligible = shuffle(
+    rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom)
+  );
+  const numGroups = 3 + Math.floor(rng() * 3); // 3–5
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++) {
+    const groupSize = 2 + Math.floor(rng() * 9); // 2–10
+    placeCluster(eligible[g], T.ENEMY, groupSize);
+  }
+
+  // ── Treasure: 1–2 in vault rooms, 0–1 elsewhere (~35%) ──
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE); // 60% chance of a second
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  // ── Traps: 1–2 in passages, 0–1 elsewhere (~20%) ────────
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  // ── Doors: place only where corridor entrance is exactly 2 tiles wide ───
+  const isInAnyRoom = (x, y) =>
+    rooms.some(rm => x >= rm.x && x < rm.x + rm.w && y >= rm.y && y < rm.y + rm.h);
+
+  const isCorridor = (x, y) => x > 0 && x < W-1 && y > 0 && y < H-1
+                             && gget(x, y) === T.FLOOR && !isInAnyRoom(x, y);
+
+  // Scan a list of coords, return pairs from runs of exactly-2 consecutive corridor tiles
+  const exactTwo = coords => {
+    const out = []; let run = [];
+    for (const c of coords) {
+      if (isCorridor(c[0], c[1])) { run.push(c); }
+      else { if (run.length === 2) out.push([run[0], run[1]]); run = []; }
+    }
+    if (run.length === 2) out.push([run[0], run[1]]);
+    return out;
+  };
+
+  for (const r of rooms) {
+    if (r.role !== 'chamber') continue;
+    if (rng() >= 0.45) continue;
+
+    const pairs = [];
+    if (r.y > 0)     pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y-1])));
+    if (r.y+r.h < H) pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y+r.h])));
+    if (r.x > 0)     pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x-1, r.y+i])));
+    if (r.x+r.w < W) pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x+r.w, r.y+i])));
+
+    if (pairs.length > 0) {
+      const p = pairs[Math.floor(rng() * pairs.length)];
+      gset(p[0][0], p[0][1], T.DOOR);
+      gset(p[1][0], p[1][1], T.DOOR);
+    }
+  }
+
+  return { grid, rooms };
+}
+
+// ── Drunk-Walk + Cellular Automata Dungeon Generator ──────────
+function generateDungeonDrunkCA(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  const DIRS = [[0,-1],[0,1],[-1,0],[1,0]];
+
+  // ── Phase 1: Drunk Walk ──────────────────────────────────────
+  const targetFloor = Math.floor(W * H * 0.42);
+  let floorCount = 0;
+  const walkers = [{ x: Math.floor(W / 2), y: Math.floor(H / 2) }];
+
+  while (floorCount < targetFloor) {
+    for (const w of walkers) {
+      const [dx, dy] = DIRS[Math.floor(rng() * 4)];
+      const nx = w.x + dx, ny = w.y + dy;
+      if (nx > 0 && nx < W - 1 && ny > 0 && ny < H - 1) {
+        w.x = nx; w.y = ny;
+        if (gget(nx, ny) !== T.FLOOR) { gset(nx, ny, T.FLOOR); floorCount++; }
+      }
+    }
+    if (walkers.length < 4 && rng() < 0.005 && floorCount < targetFloor) {
+      const src = walkers[Math.floor(rng() * walkers.length)];
+      walkers.push({ x: src.x, y: src.y });
+    }
+  }
+
+  // ── Phase 2: Cellular Automata Smoothing (4 passes) ─────────
+  for (let iter = 0; iter < 4; iter++) {
+    const next = new Uint8Array(W * H);
+    for (let y = 1; y < H - 1; y++) {
+      for (let x = 1; x < W - 1; x++) {
+        let n = 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            if (gget(x + dx, y + dy) === T.FLOOR) n++;
+          }
+        const wasFloor = gget(x, y) === T.FLOOR;
+        next[y * W + x] = (wasFloor ? n >= 4 : n >= 5) ? T.FLOOR : T.WALL;
+      }
+    }
+    grid.set(next);
+  }
+
+  // ── Phase 3: Keep Largest Connected Component ────────────────
+  function flood(sx, sy) {
+    if (gget(sx, sy) !== T.FLOOR) return [];
+    const cells = [], seen = new Uint8Array(W * H);
+    const q = [[sx, sy]]; seen[sy * W + sx] = 1;
+    while (q.length) {
+      const [x, y] = q.pop(); cells.push([x, y]);
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && !seen[ny*W+nx] && gget(nx,ny) === T.FLOOR) {
+          seen[ny*W+nx] = 1; q.push([nx, ny]);
+        }
+      }
+    }
+    return cells;
+  }
+
+  let largest = [];
+  const visited = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (gget(x, y) === T.FLOOR && !visited[y*W+x]) {
+        const region = flood(x, y);
+        for (const [rx, ry] of region) visited[ry*W+rx] = 1;
+        if (region.length > largest.length) largest = region;
+      }
+
+  for (let i = 0; i < grid.length; i++) if (grid[i] === T.FLOOR) grid[i] = T.WALL;
+  for (const [x, y] of largest) gset(x, y, T.FLOOR);
+
+  if (largest.length === 0) return { grid, rooms: [] };
+
+  // ── Phase 4: Identify Rooms via Openness Local Maxima ────────
+  // Score = floor count in 5×5 neighbourhood
+  const openness = new Float32Array(W * H);
+  for (const [cx, cy] of largest) {
+    let score = 0;
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) {
+        const nx = cx+dx, ny = cy+dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && gget(nx,ny) === T.FLOOR) score++;
+      }
+    openness[cy * W + cx] = score;
+  }
+
+  const MIN_ROOM_DIST = 8;
+  const roomSeeds = [];
+  const sorted = [...largest].sort((a, b) => openness[b[1]*W+b[0]] - openness[a[1]*W+a[0]]);
+  const taken = new Uint8Array(W * H);
+
+  for (const [sx, sy] of sorted) {
+    if (taken[sy*W+sx] || openness[sy*W+sx] < 9) continue;
+    roomSeeds.push([sx, sy]);
+    for (let dy = -MIN_ROOM_DIST; dy <= MIN_ROOM_DIST; dy++)
+      for (let dx = -MIN_ROOM_DIST; dx <= MIN_ROOM_DIST; dx++) {
+        const nx = sx+dx, ny = sy+dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H) taken[ny*W+nx] = 1;
+      }
+  }
+
+  if (roomSeeds.length === 0) return { grid, rooms: [] };
+
+  // Voronoi-assign each floor cell to nearest seed (Manhattan)
+  const assignment = new Int32Array(W * H).fill(-1);
+  for (const [x, y] of largest) {
+    let best = 0, bestDist = Infinity;
+    for (let i = 0; i < roomSeeds.length; i++) {
+      const d = Math.abs(x - roomSeeds[i][0]) + Math.abs(y - roomSeeds[i][1]);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    assignment[y*W+x] = best;
+  }
+
+  const roomCells = roomSeeds.map(() => []);
+  for (const [x, y] of largest) {
+    const ri = assignment[y*W+x];
+    if (ri >= 0) roomCells[ri].push([x, y]);
+  }
+
+  const rooms = roomSeeds.map(([cx, cy], i) => {
+    const cells = roomCells[i];
+    let minX = cx, maxX = cx, minY = cy, maxY = cy;
+    for (const [x, y] of cells) {
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    return { cx, cy, x: minX, y: minY, w: maxX-minX+1, h: maxY-minY+1,
+             area: cells.length, cells, role: 'chamber' };
+  });
+
+  // ── Phase 5: Assign Roles ────────────────────────────────────
+  rooms.sort((a, b) => a.cx - b.cx);
+  const entryRoom = rooms[0];
+
+  let exitRoom = rooms[rooms.length - 1], maxDist = 0;
+  for (const r of rooms) {
+    const d = Math.abs(r.cx - entryRoom.cx) + Math.abs(r.cy - entryRoom.cy);
+    if (d > maxDist) { maxDist = d; exitRoom = r; }
+  }
+
+  let bossRoom = null, minDist = Infinity;
+  for (const r of rooms) {
+    if (r === exitRoom) continue;
+    const d = Math.abs(r.cx - exitRoom.cx) + Math.abs(r.cy - exitRoom.cy);
+    if (d < minDist) { minDist = d; bossRoom = r; }
+  }
+  if (!bossRoom) bossRoom = entryRoom;
+
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.area <= 20)    r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function roomFloor(r) {
+    return r.cells.filter(([x, y]) => gget(x, y) === T.FLOOR);
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Boss Guards ──────────────────────────────────────────────
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  // ── Enemy Groups ─────────────────────────────────────────────
+  const eligible = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  // ── Treasure ─────────────────────────────────────────────────
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  // ── Traps ────────────────────────────────────────────────────
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  return { grid, rooms };
+}
+
+// ── Grid Tunnel Dungeon Generator ────────────────────────────
+function generateDungeonGridTunnel(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Phase 1: Grid Layout ──────────────────────────────────────
+  const ROOM_W = 5 + Math.floor(rng() * 3);  // 5–7 tiles wide
+  const ROOM_H = 4 + Math.floor(rng() * 3);  // 4–6 tiles tall
+
+  const TARGET_STEP = 20 + Math.floor(rng() * 6);  // 20–25 tiles between centers
+  const cols = Math.max(2, Math.min(7, Math.round(W / TARGET_STEP)));
+  const rows = Math.max(2, Math.min(5, Math.round(H / TARGET_STEP)));
+
+  const H_STEP = Math.floor(W / cols);
+  const V_STEP = Math.floor(H / rows);
+
+  // Fixed grid lines with ±1 tile jitter for a lived-in look
+  const colX = Array.from({length: cols}, (_, c) =>
+    Math.round(H_STEP * (c + 0.5)) + Math.floor(rng() * 3) - 1);
+  const rowY = Array.from({length: rows}, (_, r) =>
+    Math.round(V_STEP * (r + 0.5)) + Math.floor(rng() * 3) - 1);
+
+  const roomGrid = Array.from({length: rows}, () => Array(cols).fill(null));
+  const rooms = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cx = colX[c], cy = rowY[r];
+      const rx = cx - Math.floor(ROOM_W / 2);
+      const ry = cy - Math.floor(ROOM_H / 2);
+      if (rx < 1 || ry < 1 || rx + ROOM_W >= W - 1 || ry + ROOM_H >= H - 1) continue;
+      for (let dy = 0; dy < ROOM_H; dy++)
+        for (let dx = 0; dx < ROOM_W; dx++)
+          gset(rx + dx, ry + dy, T.FLOOR);
+      const room = { x: rx, y: ry, w: ROOM_W, h: ROOM_H, cx, cy, role: 'chamber' };
+      rooms.push(room);
+      roomGrid[r][c] = room;
+    }
+  }
+
+  if (rooms.length === 0) return { grid, rooms: [] };
+
+  // ── Phase 2: Tunnel Carving (spanning tree + extra loops) ─────
+  function carveStraightH(x1, x2, y) {
+    for (let x = x1; x <= x2; x++) {
+      if (y     >= 1 && y     < H - 1) gset(x, y,     T.FLOOR);
+      if (y + 1 >= 1 && y + 1 < H - 1) gset(x, y + 1, T.FLOOR);
+    }
+  }
+  function carveStraightV(y1, y2, x) {
+    for (let y = y1; y <= y2; y++) {
+      if (x     >= 1 && x     < W - 1) gset(x,     y, T.FLOOR);
+      if (x + 1 >= 1 && x + 1 < W - 1) gset(x + 1, y, T.FLOOR);
+    }
+  }
+
+  const edges = [];
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      if (!roomGrid[r][c]) continue;
+      if (c + 1 < cols && roomGrid[r][c + 1]) edges.push({ r, c, r2: r,     c2: c + 1, dir: 'h' });
+      if (r + 1 < rows && roomGrid[r + 1][c]) edges.push({ r, c, r2: r + 1, c2: c,     dir: 'v' });
+    }
+
+  const uf      = rooms.map((_, i) => i);
+  const roomIdx = new Map(rooms.map((rm, i) => [rm, i]));
+  function findUF(i) { while (uf[i] !== i) { uf[i] = uf[uf[i]]; i = uf[i]; } return i; }
+  function unionUF(a, b) { const ra = findUF(a), rb = findUF(b); if (ra !== rb) uf[ra] = rb; }
+
+  function carveEdge(e) {
+    const a = roomGrid[e.r][e.c], b = roomGrid[e.r2][e.c2];
+    if (e.dir === 'h') carveStraightH(Math.min(a.cx, b.cx), Math.max(a.cx, b.cx), rowY[e.r]);
+    else               carveStraightV(Math.min(a.cy, b.cy), Math.max(a.cy, b.cy), colX[e.c]);
+  }
+
+  shuffle(edges);
+  const usedEdges = new Set();
+  for (const e of edges) {
+    const ia = roomIdx.get(roomGrid[e.r][e.c]);
+    const ib = roomIdx.get(roomGrid[e.r2][e.c2]);
+    if (findUF(ia) !== findUF(ib)) {
+      unionUF(ia, ib);
+      usedEdges.add(e);
+      carveEdge(e);
+    }
+  }
+  for (const e of edges)
+    if (!usedEdges.has(e) && rng() < 0.35) carveEdge(e);
+
+  // ── Phase 3: Role Assignment ──────────────────────────────────
+  rooms.sort((a, b) => a.cx - b.cx);
+  const entryRoom = rooms[0];
+
+  let exitRoom = rooms[rooms.length - 1], maxDist = 0;
+  for (const r of rooms) {
+    const d = Math.abs(r.cx - entryRoom.cx) + Math.abs(r.cy - entryRoom.cy);
+    if (d > maxDist) { maxDist = d; exitRoom = r; }
+  }
+
+  let bossRoom = null, minDist = Infinity;
+  for (const r of rooms) {
+    if (r === exitRoom) continue;
+    const d = Math.abs(r.cx - exitRoom.cx) + Math.abs(r.cy - exitRoom.cy);
+    if (d < minDist) { minDist = d; bossRoom = r; }
+  }
+  if (!bossRoom) bossRoom = entryRoom;
+
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.w * r.h <= 20) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 4: Content Placement ────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  // Doors: straight 2-tile corridors between rooms are detected same as BSP
+  const isInAnyRoom = (x, y) =>
+    rooms.some(rm => x >= rm.x && x < rm.x + rm.w && y >= rm.y && y < rm.y + rm.h);
+  const isCorridor = (x, y) => x > 0 && x < W-1 && y > 0 && y < H-1
+                              && gget(x, y) === T.FLOOR && !isInAnyRoom(x, y);
+  const exactTwo = coords => {
+    const out = []; let run = [];
+    for (const c of coords) {
+      if (isCorridor(c[0], c[1])) { run.push(c); }
+      else { if (run.length === 2) out.push([run[0], run[1]]); run = []; }
+    }
+    if (run.length === 2) out.push([run[0], run[1]]);
+    return out;
+  };
+  for (const r of rooms) {
+    if (r.role !== 'chamber') continue;
+    if (rng() >= 0.45) continue;
+    const pairs = [];
+    if (r.y > 0)     pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y-1])));
+    if (r.y+r.h < H) pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y+r.h])));
+    if (r.x > 0)     pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x-1, r.y+i])));
+    if (r.x+r.w < W) pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x+r.w, r.y+i])));
+    if (pairs.length > 0) {
+      const p = pairs[Math.floor(rng() * pairs.length)];
+      gset(p[0][0], p[0][1], T.DOOR);
+      gset(p[1][0], p[1][1], T.DOOR);
+    }
+  }
+
+  return { grid, rooms };
+}
+
+// ── Hub-and-Spoke Dungeon Generator ──────────────────────────
+function generateDungeonHubSpoke(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { grid[y * W + x] = t; }
+  function gget(x, y)    { return grid[y * W + x]; }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // 2-tile-wide L-shaped corridor (same as BSP)
+  function carveWide(x0, y0, x1, y1) {
+    const hFirst = rng() < 0.5;
+    const yo = rng() < 0.5 ? 1 : -1;
+    const xo = rng() < 0.5 ? 1 : -1;
+    function hSeg(fx, tx, ay) {
+      const s = fx <= tx ? 1 : -1;
+      for (let x = fx; x !== tx + s; x += s) {
+        gset(x, ay, T.FLOOR);
+        const ny = ay + yo;
+        if (ny > 0 && ny < H - 1) gset(x, ny, T.FLOOR);
+      }
+    }
+    function vSeg(ax, fy, ty) {
+      const s = fy <= ty ? 1 : -1;
+      for (let y = fy; y !== ty + s; y += s) {
+        gset(ax, y, T.FLOOR);
+        const nx = ax + xo;
+        if (nx > 0 && nx < W - 1) gset(nx, y, T.FLOOR);
+      }
+    }
+    if (hFirst) { hSeg(x0, x1, y0); vSeg(x1, y0, y1); }
+    else        { vSeg(x0, y0, y1); hSeg(x0, x1, y1); }
+  }
+
+  // ── Phase 1: Hub Room (large central chamber) ─────────────────
+  const HUB_W = 10 + Math.floor(rng() * 5);   // 10–14 tiles
+  const HUB_H =  8 + Math.floor(rng() * 5);   // 8–12 tiles
+  const hubCx = Math.floor(W / 2);
+  const hubCy = Math.floor(H / 2);
+  const hubRx = hubCx - Math.floor(HUB_W / 2);
+  const hubRy = hubCy - Math.floor(HUB_H / 2);
+
+  for (let by = 0; by < HUB_H; by++)
+    for (let bx = 0; bx < HUB_W; bx++)
+      gset(hubRx + bx, hubRy + by, T.FLOOR);
+
+  const hubRoom = { x: hubRx, y: hubRy, w: HUB_W, h: HUB_H,
+                    cx: hubCx, cy: hubCy, role: 'boss' };
+
+  // ── Phase 2: Spoke Rooms radiating outward ────────────────────
+  const numSpokes     = 8 + Math.floor(rng() * 6);    // 8–13
+  const maxDist       = Math.floor(Math.min(W, H) / 2) - 12;
+  const SPOKE_DIST    = Math.min(18 + Math.floor(rng() * 8), maxDist);  // 18–25, clamped
+  const BASE_SPOKE_W  = 5 + Math.floor(rng() * 3);    // 5–7
+  const BASE_SPOKE_H  = 4 + Math.floor(rng() * 3);    // 4–6
+
+  const rooms      = [hubRoom];
+  const spokeRooms = [];
+
+  for (let i = 0; i < numSpokes; i++) {
+    const baseAngle = (i / numSpokes) * Math.PI * 2;
+    const jitter    = (rng() - 0.5) * (Math.PI / numSpokes * 0.4);
+    const angle     = baseAngle + jitter;
+
+    const spDx = Math.round(Math.cos(angle) * SPOKE_DIST);
+    const spDy = Math.round(Math.sin(angle) * SPOKE_DIST);
+    const scx  = hubCx + spDx;
+    const scy  = hubCy + spDy;
+    const sw   = BASE_SPOKE_W + Math.floor(rng() * 2);
+    const sh   = BASE_SPOKE_H + Math.floor(rng() * 2);
+    const srx  = scx - Math.floor(sw / 2);
+    const sry  = scy - Math.floor(sh / 2);
+
+    if (srx < 1 || sry < 1 || srx + sw >= W - 1 || sry + sh >= H - 1) continue;
+
+    for (let by = 0; by < sh; by++)
+      for (let bx = 0; bx < sw; bx++)
+        gset(srx + bx, sry + by, T.FLOOR);
+
+    const spoke = { x: srx, y: sry, w: sw, h: sh, cx: scx, cy: scy, role: 'chamber' };
+    rooms.push(spoke);
+    spokeRooms.push(spoke);
+  }
+
+  if (spokeRooms.length === 0) return { grid, rooms: [] };
+
+  // ── Phase 3: Tunnels from hub to each spoke ───────────────────
+  for (const spoke of spokeRooms)
+    carveWide(hubCx, hubCy, spoke.cx, spoke.cy);
+
+  // ── Phase 3b: Secondary rooms off spoke tips (~45% each) ──────
+  for (const spoke of [...spokeRooms]) {
+    if (rng() >= 0.45) continue;
+    const angle     = Math.atan2(spoke.cy - hubCy, spoke.cx - hubCx);
+    const extraDist = 12 + Math.floor(rng() * 8);  // 12–19 tiles farther out
+    const scx2 = Math.round(spoke.cx + Math.cos(angle) * extraDist);
+    const scy2 = Math.round(spoke.cy + Math.sin(angle) * extraDist);
+    const sw2  = 4 + Math.floor(rng() * 4);  // 4–7
+    const sh2  = 3 + Math.floor(rng() * 4);  // 3–6
+    const srx2 = scx2 - Math.floor(sw2 / 2);
+    const sry2 = scy2 - Math.floor(sh2 / 2);
+    if (srx2 < 1 || sry2 < 1 || srx2 + sw2 >= W - 1 || sry2 + sh2 >= H - 1) continue;
+    for (let by = 0; by < sh2; by++)
+      for (let bx = 0; bx < sw2; bx++)
+        gset(srx2 + bx, sry2 + by, T.FLOOR);
+    const sec = { x: srx2, y: sry2, w: sw2, h: sh2, cx: scx2, cy: scy2, role: 'chamber' };
+    rooms.push(sec);
+    carveWide(spoke.cx, spoke.cy, scx2, scy2);
+  }
+
+  // ── Phase 4: 1–2 random loops across all non-hub rooms ────────
+  const loopCount = 1 + Math.floor(rng() * 2);
+  const loopPool  = shuffle(rooms.filter(r => r !== hubRoom));
+  for (let i = 0; i < Math.min(loopCount, loopPool.length - 1); i++)
+    carveWide(loopPool[i].cx, loopPool[i].cy, loopPool[i + 1].cx, loopPool[i + 1].cy);
+
+  // ── Phase 5: Roles (hub is always boss) ───────────────────────
+  const nonHub    = rooms.filter(r => r !== hubRoom);
+  const entryRoom = nonHub.reduce((a, b) => a.cx < b.cx ? a : b);
+  const exitRoom  = nonHub.reduce((a, b) => {
+    const da = Math.abs(a.cx - entryRoom.cx) + Math.abs(a.cy - entryRoom.cy);
+    const db = Math.abs(b.cx - entryRoom.cx) + Math.abs(b.cy - entryRoom.cy);
+    return da > db ? a : b;
+  });
+  const bossRoom = hubRoom;
+
+  for (const r of rooms) {
+    if      (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    else if (r === bossRoom)  r.role = 'boss';
+    else if (r.w * r.h <= 20) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 6: Content Placement ────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let by = 0; by < r.h; by++)
+      for (let bx = 0; bx < r.w; bx++)
+        if (gget(r.x + bx, r.y + by) === T.FLOOR) tiles.push([r.x + bx, r.y + by]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (f.length === 0) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    const n = Math.min(count, f.length);
+    for (let i = 0; i < n; i++) gset(f[i][0], f[i][1], type);
+  }
+
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible  = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  const isInAnyRoom = (x, y) =>
+    rooms.some(rm => x >= rm.x && x < rm.x + rm.w && y >= rm.y && y < rm.y + rm.h);
+  const isCorridor = (x, y) => x > 0 && x < W-1 && y > 0 && y < H-1
+                              && gget(x, y) === T.FLOOR && !isInAnyRoom(x, y);
+  const exactTwo = coords => {
+    const out = []; let run = [];
+    for (const c of coords) {
+      if (isCorridor(c[0], c[1])) { run.push(c); }
+      else { if (run.length === 2) out.push([run[0], run[1]]); run = []; }
+    }
+    if (run.length === 2) out.push([run[0], run[1]]);
+    return out;
+  };
+  for (const r of rooms) {
+    if (r.role !== 'chamber') continue;
+    if (rng() >= 0.45) continue;
+    const pairs = [];
+    if (r.y > 0)     pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y-1])));
+    if (r.y+r.h < H) pairs.push(...exactTwo(Array.from({length: r.w}, (_, i) => [r.x+i, r.y+r.h])));
+    if (r.x > 0)     pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x-1, r.y+i])));
+    if (r.x+r.w < W) pairs.push(...exactTwo(Array.from({length: r.h}, (_, i) => [r.x+r.w, r.y+i])));
+    if (pairs.length > 0) {
+      const p = pairs[Math.floor(rng() * pairs.length)];
+      gset(p[0][0], p[0][1], T.DOOR);
+      gset(p[1][0], p[1][1], T.DOOR);
+    }
+  }
+
+  return { grid, rooms };
+}
+
+function generateDungeonScatter(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { if (x >= 0 && x < W && y >= 0 && y < H) grid[y * W + x] = t; }
+  function gget(x, y)    { return (x >= 0 && x < W && y >= 0 && y < H) ? grid[y * W + x] : T.WALL; }
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  const rooms = [];
+
+  // Reject building if it overlaps any already-placed room (1-tile margin)
+  function overlaps(bx, by, bw, bh) {
+    return rooms.some(r =>
+      bx < r.x + r.w + 1 && bx + bw + 1 > r.x &&
+      by < r.y + r.h + 1 && by + bh + 1 > r.y
+    );
+  }
+
+  function carveRect(bx, by, bw, bh) {
+    for (let dy = 0; dy < bh; dy++)
+      for (let dx = 0; dx < bw; dx++)
+        gset(bx + dx, by + dy, T.FLOOR);
+    return { x: bx, y: by, w: bw, h: bh,
+             cx: bx + Math.floor(bw / 2), cy: by + Math.floor(bh / 2), role: 'chamber' };
+  }
+
+  function streetH(x1, x2, y) {
+    const s = x1 <= x2 ? 1 : -1;
+    for (let x = x1; x !== x2 + s; x += s) {
+      if (x > 0 && x < W-1 && y   > 0 && y   < H-1) gset(x, y,   T.FLOOR);
+      if (x > 0 && x < W-1 && y+1 > 0 && y+1 < H-1) gset(x, y+1, T.FLOOR);
+    }
+  }
+  function streetV(y1, y2, x) {
+    const s = y1 <= y2 ? 1 : -1;
+    for (let y = y1; y !== y2 + s; y += s) {
+      if (x   > 0 && x   < W-1 && y > 0 && y < H-1) gset(x,   y, T.FLOOR);
+      if (x+1 > 0 && x+1 < W-1 && y > 0 && y < H-1) gset(x+1, y, T.FLOOR);
+    }
+  }
+  function alleyH(x1, x2, y) {
+    if (y <= 0 || y >= H-1) return;
+    const s = x1 <= x2 ? 1 : -1;
+    for (let x = x1; x !== x2 + s; x += s)
+      if (x > 0 && x < W-1) gset(x, y, T.FLOOR);
+  }
+  function alleyV(y1, y2, x) {
+    if (x <= 0 || x >= W-1) return;
+    const s = y1 <= y2 ? 1 : -1;
+    for (let y = y1; y !== y2 + s; y += s)
+      if (y > 0 && y < H-1) gset(x, y, T.FLOOR);
+  }
+
+  // Try to place a building adjacent to a horizontal street (streetY = top row).
+  // side +1 = below, -1 = above. Returns room or null if it doesn't fit.
+  function placeAlongH(streetY, side, houseX, bw, bh, withDoor) {
+    let houseY = side === 1 ? streetY + 3 : streetY - bh - 2;
+    houseY = Math.max(1, Math.min(H - bh - 2, houseY));
+    houseX = Math.max(1, Math.min(W - bw - 2, houseX));
+    if (side ===  1 && houseY <= streetY + 1) return null;
+    if (side === -1 && houseY + bh >= streetY) return null;
+    if (houseX + bw >= W - 1 || houseY + bh >= H - 1) return null;
+    if (overlaps(houseX, houseY, bw, bh)) return null;
+    const r = carveRect(houseX, houseY, bw, bh);
+    rooms.push(r);
+    const ax = houseX + Math.floor(bw / 2);
+    if (side === 1) {
+      alleyV(streetY + 2, houseY - 1, ax);
+      if (withDoor && rng() < 0.55) gset(ax, houseY, T.DOOR);
+    } else {
+      alleyV(houseY + bh, streetY - 1, ax);
+      if (withDoor && rng() < 0.55) gset(ax, houseY + bh - 1, T.DOOR);
+    }
+    return r;
+  }
+
+  // Same for a vertical street (streetX = left column). side +1 = right, -1 = left.
+  function placeAlongV(streetX, side, houseY, bw, bh, withDoor) {
+    let houseX = side === 1 ? streetX + 3 : streetX - bw - 2;
+    houseX = Math.max(1, Math.min(W - bw - 2, houseX));
+    houseY = Math.max(1, Math.min(H - bh - 2, houseY));
+    if (side ===  1 && houseX <= streetX + 1) return null;
+    if (side === -1 && houseX + bw >= streetX) return null;
+    if (houseX + bw >= W - 1 || houseY + bh >= H - 1) return null;
+    if (overlaps(houseX, houseY, bw, bh)) return null;
+    const r = carveRect(houseX, houseY, bw, bh);
+    rooms.push(r);
+    const ay = houseY + Math.floor(bh / 2);
+    if (side === 1) {
+      alleyH(streetX + 2, houseX - 1, ay);
+      if (withDoor && rng() < 0.55) gset(houseX, ay, T.DOOR);
+    } else {
+      alleyH(houseX + bw, streetX - 1, ay);
+      if (withDoor && rng() < 0.55) gset(houseX + bw - 1, ay, T.DOOR);
+    }
+    return r;
+  }
+
+  // ── Phase 1: Draw main walkways from map center ───────────────
+  const mcx = Math.floor(W / 2), mcy = Math.floor(H / 2);
+  const numWalkways = 2 + Math.floor(rng() * 4);  // 2–5
+  const reach       = Math.floor(Math.min(W, H) * 0.40) + Math.floor(rng() * 8);
+
+  // Collect axis-aligned segments for building placement, and tip coords for entry/exit
+  const hSegs = [], vSegs = [];  // { y, xlo, xhi } / { x, ylo, yhi }
+  const tips  = [];               // walkway tip coordinates [x, y]
+
+  for (let i = 0; i < numWalkways; i++) {
+    const angle = (i / numWalkways) * Math.PI * 2 + (rng() - 0.5) * 0.7;
+    const ex = Math.max(4, Math.min(W - 5, Math.round(mcx + Math.cos(angle) * reach)));
+    const ey = Math.max(4, Math.min(H - 5, Math.round(mcy + Math.sin(angle) * reach)));
+
+    tips.push([ex, ey]);
+
+    if (rng() < 0.5) {
+      streetH(mcx, ex, mcy);  streetV(mcy, ey, ex);
+      if (Math.abs(ex - mcx) > 5) hSegs.push({ y: mcy, xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+      if (Math.abs(ey - mcy) > 5) vSegs.push({ x: ex,  ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+    } else {
+      streetV(mcy, ey, mcx);  streetH(mcx, ex, ey);
+      if (Math.abs(ey - mcy) > 5) vSegs.push({ x: mcx, ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+      if (Math.abs(ex - mcx) > 5) hSegs.push({ y: ey,  xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+    }
+  }
+
+  // ── Phase 2: Large buildings (2–3) on segments nearest center ─
+  const numLarge = 2 + Math.floor(rng() * 2);
+
+  // Rank segments by distance of their midpoint from map center
+  const byDist = (a, b) => {
+    const da = Math.abs((a.xlo !== undefined ? (a.xlo+a.xhi)/2 : a.x) - mcx)
+             + Math.abs((a.ylo !== undefined ? (a.ylo+a.yhi)/2 : a.y) - mcy);
+    const db = Math.abs((b.xlo !== undefined ? (b.xlo+b.xhi)/2 : b.x) - mcx)
+             + Math.abs((b.ylo !== undefined ? (b.ylo+b.yhi)/2 : b.y) - mcy);
+    return da - db;
+  };
+  const nearSegs = shuffle([...hSegs, ...vSegs].sort(byDist).slice(0, 4));
+
+  let largePlaced = 0;
+  for (let attempt = 0; attempt < nearSegs.length * 3 && largePlaced < numLarge; attempt++) {
+    const seg  = nearSegs[attempt % nearSegs.length];
+    const bw   = 8 + Math.floor(rng() * 6);   // 8–13
+    const bh   = 5 + Math.floor(rng() * 4);   // 5–8
+    const side = rng() < 0.5 ? 1 : -1;
+    let r = null;
+    if (seg.y !== undefined) {
+      const hx = Math.floor((seg.xlo + seg.xhi) / 2) - Math.floor(bw / 2) + Math.floor((rng() - 0.5) * 8);
+      r = placeAlongH(seg.y, side, hx, bw, bh, false);
+    } else {
+      const hy = Math.floor((seg.ylo + seg.yhi) / 2) - Math.floor(bh / 2) + Math.floor((rng() - 0.5) * 8);
+      r = placeAlongV(seg.x, side, hy, bw, bh, false);
+    }
+    if (r) largePlaced++;
+  }
+
+  // ── Phase 3: Small houses along all walkway segments ──────────
+  for (const seg of hSegs) {
+    const len = seg.xhi - seg.xlo;
+    if (len < 5) continue;
+    const n  = 2 + Math.floor(rng() * 3);  // 2–4 houses per segment
+    const sp = Math.floor(len / (n + 1));
+    for (let h = 0; h < n; h++) {
+      const bw   = 3 + Math.floor(rng() * 4);  // 3–6
+      const bh   = 3 + Math.floor(rng() * 3);  // 3–5
+      const side = rng() < 0.5 ? 1 : -1;
+      const hx   = seg.xlo + sp * (h + 1) - Math.floor(bw / 2) + Math.floor((rng() - 0.5) * 4);
+      placeAlongH(seg.y, side, hx, bw, bh, true);
+    }
+  }
+  for (const seg of vSegs) {
+    const len = seg.yhi - seg.ylo;
+    if (len < 5) continue;
+    const n  = 2 + Math.floor(rng() * 3);  // 2–4 houses per segment
+    const sp = Math.floor(len / (n + 1));
+    for (let h = 0; h < n; h++) {
+      const bw   = 3 + Math.floor(rng() * 4);
+      const bh   = 3 + Math.floor(rng() * 3);
+      const side = rng() < 0.5 ? 1 : -1;
+      const hy   = seg.ylo + sp * (h + 1) - Math.floor(bh / 2) + Math.floor((rng() - 0.5) * 4);
+      placeAlongV(seg.x, side, hy, bw, bh, true);
+    }
+  }
+
+  if (rooms.length < 2) return { grid, rooms };
+
+  // ── Phase 4: Roles ────────────────────────────────────────────
+  // Largest of the first largePlaced rooms = Village Hall (boss)
+  const bossRoom = rooms.slice(0, largePlaced || 1).sort((a, b) => b.w * b.h - a.w * a.h)[0];
+  const nonBoss  = rooms.filter(r => r !== bossRoom);
+
+  // Entry and exit are rooms nearest to the two most-separated walkway tips
+  function nearestRoom(px, py, exclude) {
+    return nonBoss
+      .filter(r => !exclude.includes(r))
+      .reduce((best, r) => {
+        const d  = Math.abs(r.cx - px) + Math.abs(r.cy - py);
+        const bd = Math.abs(best.cx - px) + Math.abs(best.cy - py);
+        return d < bd ? r : best;
+      });
+  }
+  let entryTip = tips[0], exitTip = tips[0], maxTipDist = 0;
+  for (let i = 0; i < tips.length; i++)
+    for (let j = i + 1; j < tips.length; j++) {
+      const d = Math.abs(tips[i][0] - tips[j][0]) + Math.abs(tips[i][1] - tips[j][1]);
+      if (d > maxTipDist) { maxTipDist = d; entryTip = tips[i]; exitTip = tips[j]; }
+    }
+  const entryRoom = nearestRoom(entryTip[0], entryTip[1], []);
+  const exitRoom  = nearestRoom(exitTip[0],  exitTip[1],  [entryRoom]);
+
+  for (const r of rooms) {
+    if      (r === bossRoom)   r.role = 'boss';
+    else if (r === entryRoom)  r.role = 'entry';
+    else if (r === exitRoom)   r.role = 'exit';
+    else if (r.w * r.h <= 15) r.role = 'passage';
+    else {
+      const roll = rng();
+      r.role = roll < 0.28 ? 'vault' : roll < 0.56 ? 'barracks' : 'chamber';
+    }
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 5: Content ──────────────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r);
+    if (!f.length) return;
+    const [x, y] = f[Math.floor(rng() * f.length)];
+    gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r);
+    if (!f.length) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    for (let i = 0; i < Math.min(count, f.length); i++) gset(f[i][0], f[i][1], type);
+  }
+
+  const guardCount = 2 + Math.floor(rng() * 3);
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (nx > 0 && ny > 0 && nx < W-1 && ny < H-1 && gget(nx, ny) === T.FLOOR)
+        guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(guardCount, guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible  = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 3);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 2 + Math.floor(rng() * 9));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE);
+      if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.35) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'passage') {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+        if (rng() < 0.60) placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      } else if (rng() < 0.80) {
+        placeOne(r, rng() < 0.65 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  return { grid, rooms };
+}
+
+// ── Cell Block (Prison) Dungeon Generator ──────────────────────
+function generateDungeonCellBlock(W, H, theme, rng) {
+  const grid = new Uint8Array(W * H);
+  function gset(x, y, t) { if (x >= 0 && x < W && y >= 0 && y < H) grid[y * W + x] = t; }
+  function gget(x, y)    { return (x >= 0 && x < W && y >= 0 && y < H) ? grid[y * W + x] : T.WALL; }
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  const rooms  = [];
+  const blocks = []; // placed building rects for overlap detection
+
+  function blockOverlaps(bx, by, bw, bh) {
+    return blocks.some(b =>
+      bx < b.x + b.w + 2 && bx + bw + 2 > b.x &&
+      by < b.y + b.h + 2 && by + bh + 2 > b.y
+    );
+  }
+
+  // Map-consistent cell sizing
+  const cellW    = 3 + Math.floor(rng() * 3);  // 3–5 tiles per cell
+  const cellRowH = 2 + Math.floor(rng() * 2);  // 2–3 rows per cell row
+  const BLOCK_H  = cellRowH * 2 + 4;           // cells + wall + 2-corridor + wall + cells
+
+  // Carve a cell block building and subdivide into cells internally.
+  // Returns the corridor room object, or null if blocked / too small.
+  function placeBlock(bxIn, byIn, bw, bh) {
+    const bx = Math.max(2, Math.min(W - bw - 2, bxIn));
+    const by = Math.max(2, Math.min(H - bh - 2, byIn));
+    if (bw < cellW * 2 + 3 || bh < BLOCK_H) return null;
+    if (blockOverlaps(bx, by, bw, bh)) return null;
+    blocks.push({ x: bx, y: by, w: bw, h: bh });
+
+    // Full floor rectangle
+    for (let dy = 0; dy < bh; dy++)
+      for (let dx = 0; dx < bw; dx++)
+        gset(bx + dx, by + dy, T.FLOOR);
+
+    const wallY1 = by + cellRowH;            // top separator wall
+    const wallY2 = by + bh - cellRowH - 1;  // bottom separator wall
+    const corrY  = wallY1 + 1;              // top of 2-tile corridor
+
+    // Draw horizontal separator walls (overwrite floor)
+    for (let x = bx; x < bx + bw; x++) {
+      gset(x, wallY1, T.WALL);
+      gset(x, wallY2, T.WALL);
+    }
+
+    // Cells + vertical dividers + single-tile door/gap in each separator wall
+    const numCells = Math.max(1, Math.floor((bw - 1) / (cellW + 1)));
+    const span     = numCells * (cellW + 1) - 1;
+    const startX   = bx + 1 + Math.floor((bw - 2 - span) / 2);
+
+    for (let c = 0; c < numCells; c++) {
+      const cx   = startX + c * (cellW + 1);
+      const midX = cx + Math.floor(cellW / 2);
+      if (cx + cellW > bx + bw - 1) break;
+
+      // Vertical dividers between cells (left wall of each cell, skip first)
+      if (c > 0) {
+        const divX = cx - 1;
+        for (let y = by; y < wallY1; y++) gset(divX, y, T.WALL);
+        for (let y = wallY2 + 1; y < by + bh; y++) gset(divX, y, T.WALL);
+      }
+
+      // Single-tile gap in each separator wall — door (65%) or open (35%)
+      gset(midX, wallY1, rng() < 0.65 ? T.DOOR : T.FLOOR);
+      gset(midX, wallY2, rng() < 0.65 ? T.DOOR : T.FLOOR);
+
+      // Cell rooms (top and bottom)
+      rooms.push({ x: cx, y: by, w: cellW, h: cellRowH,
+                   cx: midX, cy: by + Math.floor(cellRowH / 2),
+                   role: 'passage', area: cellW * cellRowH });
+      rooms.push({ x: cx, y: wallY2 + 1, w: cellW, h: cellRowH,
+                   cx: midX, cy: wallY2 + 1 + Math.floor(cellRowH / 2),
+                   role: 'passage', area: cellW * cellRowH });
+    }
+
+    // Corridor room (the walkable central strip)
+    const corrH = wallY2 - corrY;
+    const corr  = { x: bx, y: corrY, w: bw, h: corrH,
+                    cx: bx + Math.floor(bw / 2), cy: corrY + Math.floor(corrH / 2),
+                    role: 'chamber', area: bw * corrH };
+    rooms.push(corr);
+    return corr;
+  }
+
+  // ── Phase 1: Walkways from center (Scatter-style) ─────────────
+  const mcx = Math.floor(W / 2), mcy = Math.floor(H / 2);
+  const numWalkways = 2 + Math.floor(rng() * 3);  // 2–4
+  const reach = Math.floor(Math.min(W, H) * 0.38) + Math.floor(rng() * 8);
+  const tips  = [];
+  const hSegs = [], vSegs = [];
+
+  function streetH(x1, x2, y) {
+    const lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+    for (let x = lo; x <= hi; x++) { gset(x, y, T.FLOOR); gset(x, y + 1, T.FLOOR); }
+  }
+  function streetV(y1, y2, x) {
+    const lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+    for (let y = lo; y <= hi; y++) { gset(x, y, T.FLOOR); gset(x + 1, y, T.FLOOR); }
+  }
+
+  for (let i = 0; i < numWalkways; i++) {
+    const angle = (i / numWalkways) * Math.PI * 2 + (rng() - 0.5) * 0.6;
+    const ex = Math.max(5, Math.min(W - 6, Math.round(mcx + Math.cos(angle) * reach)));
+    const ey = Math.max(5, Math.min(H - 6, Math.round(mcy + Math.sin(angle) * reach)));
+    tips.push([ex, ey]);
+    if (rng() < 0.5) {
+      streetH(mcx, ex, mcy); streetV(mcy, ey, ex);
+      if (Math.abs(ex - mcx) > 10) hSegs.push({ y: mcy, xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+      if (Math.abs(ey - mcy) > 10) vSegs.push({ x: ex,  ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+    } else {
+      streetV(mcy, ey, mcx); streetH(mcx, ex, ey);
+      if (Math.abs(ey - mcy) > 10) vSegs.push({ x: mcx, ylo: Math.min(mcy, ey), yhi: Math.max(mcy, ey) });
+      if (Math.abs(ex - mcx) > 10) hSegs.push({ y: ey,  xlo: Math.min(mcx, ex), xhi: Math.max(mcx, ex) });
+    }
+  }
+
+  // ── Phase 2: Place cell blocks along segments ─────────────────
+  // Horizontal segments: buildings above and below
+  for (const seg of hSegs) {
+    const segLen = seg.xhi - seg.xlo;
+    if (segLen < cellW * 3 + 6) continue;
+    for (const side of shuffle([1, -1])) {
+      const numBlocks = 1 + Math.floor(rng() * 2);
+      const slotW = Math.floor(segLen / numBlocks);
+      const bw    = Math.max(cellW * 3, slotW - 3);
+      for (let b = 0; b < numBlocks; b++) {
+        const bx  = seg.xlo + 2 + b * slotW + Math.floor(rng() * 3);
+        const by  = side === 1 ? seg.y + 3 : seg.y - BLOCK_H - 2;
+        const corr = placeBlock(bx, by, Math.min(bw, seg.xhi - bx - 2), BLOCK_H);
+        if (corr) {
+          // Punch vertical connection from street to the building's corridor
+          const ax  = corr.cx;
+          const y0  = Math.min(seg.y + 2, corr.cy);
+          const y1  = Math.max(seg.y + 1, corr.cy);
+          for (let y = y0; y <= y1; y++) gset(ax, y, T.FLOOR);
+        }
+      }
+    }
+  }
+
+  // Vertical segments: buildings left and right
+  for (const seg of vSegs) {
+    const segLen = seg.yhi - seg.ylo;
+    if (segLen < BLOCK_H + 4) continue;
+    for (const side of shuffle([1, -1])) {
+      const numBlocks = 1 + Math.floor(rng() * 2);
+      const slotH = Math.floor(segLen / numBlocks);
+      const bw    = Math.max(cellW * 3, Math.min(Math.floor(W * 0.28), 22));
+      for (let b = 0; b < numBlocks; b++) {
+        const by  = seg.ylo + 2 + b * slotH + Math.floor(rng() * 3);
+        const bx  = side === 1 ? seg.x + 3 : seg.x - bw - 2;
+        const corr = placeBlock(bx, by, bw, BLOCK_H);
+        if (corr) {
+          // Punch horizontal connection from segment to the building's corridor
+          const ay  = corr.cy;
+          const x0  = Math.min(seg.x + 2, corr.cx);
+          const x1  = Math.max(seg.x + 1, corr.cx);
+          for (let x = x0; x <= x1; x++) gset(x, ay, T.FLOOR);
+        }
+      }
+    }
+  }
+
+  // ── Phase 3: Warden's Office (boss) at center ─────────────────
+  const wardW = 8 + Math.floor(rng() * 4);
+  const wardH = 5 + Math.floor(rng() * 3);
+  const wardX = Math.max(2, Math.min(W - wardW - 2, mcx - Math.floor(wardW / 2)));
+  const wardY = Math.max(2, Math.min(H - wardH - 2, mcy - Math.floor(wardH / 2)));
+  for (let dy = 0; dy < wardH; dy++)
+    for (let dx = 0; dx < wardW; dx++)
+      gset(wardX + dx, wardY + dy, T.FLOOR);
+  blocks.push({ x: wardX, y: wardY, w: wardW, h: wardH });
+  const bossRoom = { x: wardX, y: wardY, w: wardW, h: wardH,
+                     cx: wardX + Math.floor(wardW / 2), cy: wardY + Math.floor(wardH / 2),
+                     role: 'boss', area: wardW * wardH };
+  rooms.push(bossRoom);
+
+  if (rooms.length < 3) return { grid, rooms };
+
+  // ── Phase 4: Entry / Exit at walkway tips ─────────────────────
+  function nearestRoom(px, py, exclude) {
+    const cands = rooms.filter(r => !exclude.includes(r));
+    if (!cands.length) return null;
+    return cands.reduce((best, r) => {
+      const d  = Math.abs(r.cx - px) + Math.abs(r.cy - py);
+      const bd = Math.abs(best.cx - px) + Math.abs(best.cy - py);
+      return d < bd ? r : best;
+    });
+  }
+
+  let entryTip = tips[0], exitTip = tips[tips.length - 1], maxD = 0;
+  for (let i = 0; i < tips.length; i++)
+    for (let j = i + 1; j < tips.length; j++) {
+      const d = Math.abs(tips[i][0] - tips[j][0]) + Math.abs(tips[i][1] - tips[j][1]);
+      if (d > maxD) { maxD = d; entryTip = tips[i]; exitTip = tips[j]; }
+    }
+
+  const entryRoom = nearestRoom(entryTip[0], entryTip[1], [bossRoom]) || rooms[0];
+  const exitRoom  = nearestRoom(exitTip[0],  exitTip[1],  [bossRoom, entryRoom]) || rooms[1];
+
+  for (const r of rooms) {
+    if      (r === bossRoom)  r.role = 'boss';
+    else if (r === entryRoom) r.role = 'entry';
+    else if (r === exitRoom)  r.role = 'exit';
+    // cells stay 'passage', block corridors stay 'chamber'
+  }
+
+  gset(entryRoom.cx, entryRoom.cy, T.ENTRY);
+  gset(exitRoom.cx,  exitRoom.cy,  T.EXIT);
+  gset(bossRoom.cx,  bossRoom.cy,  T.BOSS);
+
+  // ── Phase 5: Content ──────────────────────────────────────────
+  function roomFloor(r) {
+    const tiles = [];
+    for (let dy = 0; dy < r.h; dy++)
+      for (let dx = 0; dx < r.w; dx++)
+        if (gget(r.x + dx, r.y + dy) === T.FLOOR) tiles.push([r.x + dx, r.y + dy]);
+    return tiles;
+  }
+  function placeOne(r, type) {
+    const f = roomFloor(r); if (!f.length) return;
+    const [x, y] = f[Math.floor(rng() * f.length)]; gset(x, y, type);
+  }
+  function placeCluster(r, type, count) {
+    const f = roomFloor(r); if (!f.length) return;
+    const [ax, ay] = f[Math.floor(rng() * f.length)];
+    f.sort((a, b) => (Math.abs(a[0]-ax)+Math.abs(a[1]-ay)) - (Math.abs(b[0]-ax)+Math.abs(b[1]-ay)));
+    for (let i = 0; i < Math.min(count, f.length); i++) gset(f[i][0], f[i][1], type);
+  }
+
+  // Boss guards around Warden
+  const guardSpots = [];
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = bossRoom.cx + dx, ny = bossRoom.cy + dy;
+      if (gget(nx, ny) === T.FLOOR) guardSpots.push([nx, ny]);
+    }
+  shuffle(guardSpots);
+  for (let i = 0; i < Math.min(2 + Math.floor(rng() * 3), guardSpots.length); i++)
+    gset(guardSpots[i][0], guardSpots[i][1], T.ENEMY);
+
+  const eligible  = shuffle(rooms.filter(r => r !== entryRoom && r !== exitRoom && r !== bossRoom));
+  const numGroups = 3 + Math.floor(rng() * 4);
+  for (let g = 0; g < Math.min(numGroups, eligible.length); g++)
+    placeCluster(eligible[g], T.ENEMY, 1 + Math.floor(rng() * 5));
+
+  for (const r of rooms) {
+    if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+    if (r.role === 'vault') {
+      placeOne(r, T.TREASURE); if (rng() < 0.6) placeOne(r, T.TREASURE);
+    } else if (rng() < 0.28) {
+      placeOne(r, T.TREASURE);
+    }
+  }
+
+  if (theme.hasTrap) {
+    for (const r of rooms) {
+      if (r === entryRoom || r === exitRoom || r === bossRoom) continue;
+      if (r.role === 'chamber') {
+        placeOne(r, T.TRAP); if (rng() < 0.45) placeOne(r, T.TRAP);
+      } else if (r.role === 'passage') {
+        if (rng() < 0.50) placeOne(r, T.TRAP);
+      } else if (rng() < 0.30) {
+        placeOne(r, rng() < 0.6 ? T.TRAP : T.HAZARD);
+      }
+    }
+  }
+
+  return { grid, rooms };
+}
+
+// ── Canvas renderer ───────────────────────────────────────────
+function renderDungeon(canvas, grid, rooms, W, H, px, theme) {
+  canvas.width  = W * px;
+  canvas.height = H * px;
+  const ctx = canvas.getContext('2d');
+  const fontSize = Math.max(6, px - 3);
+
+  ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t  = grid[y * W + x];
+      const bx = x * px;
+      const by = y * px;
+
+      ctx.fillStyle = (t === T.FLOOR) ? theme.floor : TILE_BG[t];
+      ctx.fillRect(bx, by, px, px);
+
+      const mk = TILE_MARK[t];
+      if (mk) {
+        ctx.fillStyle = mk.col;
+        ctx.fillText(mk.ch, bx + px * 0.5, by + px * 0.5);
+      }
+    }
+  }
+
+  // Room-role labels on larger rooms
+  if (px >= 12) {
+    const labelMap = { entry:'ENTRY', exit:'EXIT', boss:'BOSS',
+                       vault:'VAULT', barracks:'BRCKS', passage:'PASS' };
+    ctx.font = `${Math.max(7, px - 6)}px 'Courier New', monospace`;
+    for (const r of rooms) {
+      if ((r.area ?? r.w * r.h) < 25) continue;
+      const lbl = labelMap[r.role];
+      if (!lbl) continue;
+      const alpha = (r.role === 'boss' || r.role === 'entry' || r.role === 'exit') ? 0.9 : 0.35;
+      ctx.fillStyle = `rgba(240,192,64,${alpha})`;
+      ctx.fillText(lbl, r.cx * px + px * 0.5, (r.cy + 1) * px + px * 0.5);
+    }
+  }
+}
+
+// ── Loot table calculator ─────────────────────────────────────
+function lootTable(dl) {
+  const shifts  = Math.floor(Math.max(0, dl - 1) / 10);
+  let common    = Math.max(0,  60 - shifts * 5);
+  let uncommon  = Math.min(50, 25 + shifts * 3);
+  let rare      = Math.min(35, 12 + shifts * 2);
+  let legendary = Math.max(0, 100 - common - uncommon - rare);
+  const total   = common + uncommon + rare + legendary;
+  return {
+    common:    Math.round(common    / total * 100),
+    uncommon:  Math.round(uncommon  / total * 100),
+    rare:      Math.round(rare      / total * 100),
+    legendary: Math.round(legendary / total * 100),
+  };
+}
+
+// ── UI helpers ────────────────────────────────────────────────
+function getTheme() {
+  const id = document.getElementById('themeSelect').value;
+  return THEMES.find(t => t.id === id) || THEMES[0];
+}
+
+function updateThemeBox() {
+  const th = getTheme();
+  document.getElementById('themeTitle').textContent    = th.name;
+  document.getElementById('themeEnemies').textContent  = th.enemies;
+  document.getElementById('themeTraps').textContent    = th.traps;
+  document.getElementById('themeLoot').textContent     = th.loot;
+}
+
+function updateLootDisplay(dl) {
+  const lt  = lootTable(dl);
+  const max = Math.max(lt.common, lt.uncommon, lt.rare, lt.legendary, 1);
+
+  document.getElementById('pctCommon').textContent    = lt.common    + '%';
+  document.getElementById('pctUncommon').textContent  = lt.uncommon  + '%';
+  document.getElementById('pctRare').textContent      = lt.rare      + '%';
+  document.getElementById('pctLegendary').textContent = lt.legendary + '%';
+
+  document.getElementById('barCommon').style.width    = (lt.common    / max * 100) + '%';
+  document.getElementById('barUncommon').style.width  = (lt.uncommon  / max * 100) + '%';
+  document.getElementById('barRare').style.width      = (lt.rare      / max * 100) + '%';
+  document.getElementById('barLegendary').style.width = (lt.legendary / max * 100) + '%';
+}
+
+function randomSeed() {
+  document.getElementById('seedInput').value = Math.floor(Math.random() * 9999999);
+  generate();
+}
+
+// ── Main generate ─────────────────────────────────────────────
+function generate() {
+  const theme   = getTheme();
+  const sizeKey = document.getElementById('sizeSelect').value;
+  const dl   = Math.max(1, parseInt(document.getElementById('dangerLevel').value)  || 5);
+  const seed = Math.max(0, parseInt(document.getElementById('seedInput').value) || 42);
+  const rng  = makePRNG(seed);
+
+  const { W, H, px, depth } = pickDimensions(sizeKey, rng);
+  const useCA        = (theme.id === 'beast'   || theme.id === 'forest');
+  const useGrid      = (theme.id === 'sewer');
+  const useHub       = (theme.id === 'dragon');
+  const useScatter   = (theme.id === 'village');
+  const useCellBlock = (theme.id === 'prison');
+  const { grid, rooms } = useCA        ? generateDungeonDrunkCA(W, H, theme, rng)
+                        : useGrid      ? generateDungeonGridTunnel(W, H, theme, rng)
+                        : useHub       ? generateDungeonHubSpoke(W, H, theme, rng)
+                        : useScatter   ? generateDungeonScatter(W, H, theme, rng)
+                        : useCellBlock ? generateDungeonCellBlock(W, H, theme, rng)
+                        :                generateDungeon(W, H, theme, rng, depth);
+  const canvas = document.getElementById('dungeonCanvas');
+  renderDungeon(canvas, grid, rooms, W, H, px, theme);
+
+  // Count tiles
+  const counts = {};
+  for (const t of grid) counts[t] = (counts[t] || 0) + 1;
+
+  document.getElementById('statAlgorithm').textContent =
+    useCA ? 'Drunk-walk + CA' : useGrid ? 'Grid Tunnel' : useHub ? 'Hub & Spoke'
+    : useScatter ? 'Scatter' : useCellBlock ? 'Cell Block' : 'BSP';
+  document.getElementById('statGrid').textContent     = `${W} × ${H}`;
+  document.getElementById('statRooms').textContent    = rooms.length;
+  document.getElementById('statEnemies').textContent  = counts[T.ENEMY]    || 0;
+  document.getElementById('statBoss').textContent     = counts[T.BOSS]     ? 'present' : 'none';
+  document.getElementById('statTraps').textContent    = counts[T.TRAP]     || 0;
+  document.getElementById('statTreasure').textContent = counts[T.TREASURE] || 0;
+  document.getElementById('statHazards').textContent  = counts[T.HAZARD]   || 0;
+  document.getElementById('statDoors').textContent    = counts[T.DOOR]     || 0;
+  document.getElementById('statFloor').textContent    = (counts[T.FLOOR]   || 0).toLocaleString();
+
+  updateLootDisplay(dl);
+
+  document.getElementById('themeInfoPanel').innerHTML =
+    `<b>Enemies:</b> ${theme.enemies}<br>` +
+    `<b>Traps:</b> ${theme.traps}<br>` +
+    `<b>Loot:</b> ${theme.loot}`;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+(function init() {
+  const sel = document.getElementById('themeSelect');
+  for (const t of THEMES) {
+    const opt = document.createElement('option');
+    opt.value       = t.id;
+    opt.textContent = t.name;
+    sel.appendChild(opt);
+  }
+  updateThemeBox();
+  generate();
+}());
+</script>
+</body>
+</html>

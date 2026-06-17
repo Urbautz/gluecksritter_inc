@@ -1,4 +1,4 @@
-# Dungeons — Map, Encounters & Loot
+# Dungeons — Map & Loot
 
 ## Overview
 
@@ -39,12 +39,12 @@ Tiles are grouped into **rooms** of varying shapes and sizes. All themes share t
 
 ### Map Sizes
 
-| Size | Grid | Rooms | Typical Difficulty |
+| Size | Grid | Rooms | Typical Danger Level |
 |---|---|---|---|
-| Small | 100×100 | 4–8 | Tier 1–2 |
-| Medium | 200×200 | 10–18 | Tier 2–3 |
-| Large | 300×300 | 18–30 | Tier 3–4 |
-| Mega | 50×500 | 30+ | Tier 4–5 |
+| Small | 100×100 | 4–8 | 1–25 |
+| Medium | 200×200 | 10–18 | 10–50 |
+| Large | 300×300 | 18–30 | 30–75 |
+| Mega | 500×500 | 30+ | 50+ |
 
 ## Dungeon Generator
 
@@ -68,9 +68,10 @@ Each theme uses an algorithm suited to its spatial feel:
 2. Run theme algorithm to carve rooms
 3. Connect rooms (minimum spanning tree + extra loops for interest)
 4. Place Exit at maximum distance from Entry
-5. Populate rooms with encounters scaled to dungeon difficulty tier
+5. Populate rooms with encounters scaled to dungeon Danger Level
 6. Place traps, treasures, hazards according to dungeon theme
-7. Place Boss Lair on the critical path, near Exit
+7. Roll for Uber-Boss (5% chance): if triggered, replace Boss with Uber-Boss and mark dungeon as flagged
+8. Place Boss Lair on the critical path, near Exit
 
 ### Dungeon Themes
 
@@ -85,7 +86,7 @@ Each theme uses an algorithm suited to its spatial feel:
 | Sewer | Grid Tunnel | Tunnel, Junction, Cistern, Refuse Heap, Boss Chamber |
 | Dragon Hoard | Hub-and-Spoke | Narrow Pass, Treasure Hall, Roost, Boss Lair |
 | Forest | Drunk-walk + CA | Game Trail, Clearing, Druid Grove, Predator Den, Ancient Tree |
-| Prison | Grid Tunnel | Cell Block, Guard Post, Armoury, Torture Chamber, Warden's Office |
+| Prison | Cell Block | Cell Block, Guard Post, Armoury, Torture Chamber, Warden's Office |
 | Fortress | BSP | Gatehouse, Barracks Hall, Great Hall, Armoury, Throne Room |
 | Abandoned Village | Scatter | Street, Ruined House, Cellar, Town Square, Village Hall |
 
@@ -104,58 +105,21 @@ Each theme uses an algorithm suited to its spatial feel:
 | Fortress | Soldiers, knights, mages | Arrow slits, portcullises, oil traps | Military gear, war chest, maps |
 | Abandoned Village | Bandits, cultists, ghosts | Hidden cellars, cursed objects | Household valuables, hidden coin |
 
-## Encounters
+## Fog of War
 
-### Enemy Stats
+The dungeon map starts fully hidden (black). Rooms are revealed as heroes enter them. The player has a **live view** of the map as it is explored — this is the main visual of the game during a run.
 
-Enemies have simplified stats mirroring hero stats: HP, STR, DEX, SMA, WIT, Initiative pool, Special Abilities and an Armor rating.
+## Party Composition
 
-Enemy difficulty is rated **CR (Challenge Rating)** 1–10. CR maps directly to approximate pool sizes:
-- CR 1–2: pools of 2–3 dice (fodder)
-- CR 3–5: pools of 4–6 dice (standard threat)
-- CR 6–8: pools of 7–9 dice (dangerous)
-- CR 9–10: pools of 10+ dice (boss-tier)
+The player can assign as many heroes as they want to the dungeon.
 
-### Combat Resolution
+The dungeon run outcome is heavily influenced by party composition:
 
-Combat is **automated and dice-pool-based** (visible to the player as animated events on the map).
-
-#### Initiative
-Each combatant rolls their **DEX pool** at the start of combat. Net result determines turn order (highest net goes first; ties broken by raw DEX value).
-
-#### Attack
-Attacker rolls their relevant pool (**STR** for melee, **DEX** for ranged, **SMA** for spells) + possible bonuses
-Defender roles their relevant pool (**WIT** or **SMA*) + possible bonuses
-Outcome is determined by comparing Nets (Criticals double the net)
-
-| Attacker net vs Defender net | Result |
-|---|---|
-| Attacker net > Defender net | Hit — damage = attacker net |
-| Equal | Glancing blow — half damage |
-| Defender net > Attacker net | Miss |
-
-#### Damage & HP
-Damage = **weapon base value + attacker's net hits** (×2 on a critical hit). 
-Armor grants **Damage Reduction (DR)** — subtract DR from incoming damage before applying to HP.
-Damage is always at least 1.
-
-#### Special Abilities
-Trigger on specific conditions: flanking (+1 die to attacker), low HP (below 30% triggers fear SMA check), enemy type bonuses (Undead ignore fear, Constructs immune to poison).
-
-#### Round Flow
-1. Roll initiative pools → sort turn order
-2. Each combatant takes their turn in order (attack or special ability)
-3. Heroes with Morale ≤ 25 must pass a **SMA pool check (net ≥ 1)** each round or attempt to flee
-4. Round repeats until one side is eliminated or flees
-
-The player watches this on the dungeon map. They cannot intervene except to **sound the retreat**.
-
-### Retreat
-
-When the player orders a retreat:
-- Heroes move toward Exit, fighting only if cornered
-- Each hero rolls a **DEX pool check (net ≥ 1)** to disengage from current combat; failure means one more attack is taken before they break free
-- Loot carried at retreat time is kept; loot not yet picked up is lost
+- A Rogue in the party disarms traps before they trigger
+- A Cleric heals between rooms (reduces injury risk)
+- A Mage can open locked doors magically (skipping DEX pool checks, uses SMA pool instead with a bonus die)
+- A Bard keeps morale up, reducing flee-chance
+- A Ranger spots ambushes before the party walks in
 
 ## Loot
 
@@ -168,7 +132,7 @@ Each treasure tile and enemy group has a **loot table** with weighted random rol
 - Rare (12%): good equipment, spell scrolls
 - Legendary (3%): unique named items, story artefacts
 
-Dungeon tier shifts the table weights upward.
+Dungeon Danger Level shifts the table weights upward — each 10 levels above 1 shifts 5% from Common to Uncommon and 2% from Uncommon to Rare. There is no floor — at very high Danger Levels, Common drops out entirely and even Legendary begins yielding to rarer tiers not on the base table (epic or mythic quality). The shift continues indefinitely as Danger Level rises.
 
 ### Loot Types
 
@@ -181,23 +145,6 @@ Dungeon tier shifts the table weights upward.
 | Artefacts | Ancient relics | High value, special buyers |
 | Documents | Maps, contracts, blackmail | Quest items, unlock new contracts |
 | Treasure Cards | Deeds, favours, secrets | Wild-card high value items |
-
-## Fog of War
-
-The dungeon map starts fully hidden (black). Rooms are revealed as heroes enter them. The player has a **live view** of the map as it is explored — this is the main visual of the game during a run.
-
-## Party Composition in Dungeons
-
-The player can assign as many heros as he wants to the dungeon.
-
-The dungeon run outcome is heavily influenced by party composition:
-
-- A Rogue in the party disarms traps before they trigger
-- A Cleric heals between rooms (reduces injury risk)
-- A Mage can open locked doors magically (skipping DEX pool checks, uses SMA pool instead with a bonus die)
-- A Bard keeps morale up, reducing flee-chance
-- A Ranger spots ambushes before the party walks in
-
 
 ## Post-Run Report
 
